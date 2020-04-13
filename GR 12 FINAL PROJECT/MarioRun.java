@@ -97,6 +97,7 @@ class GamePanel extends JPanel implements KeyListener{
 		setSize(800,600);
         addKeyListener(this);
         loadPlatforms();
+        loadCoins();
 	}
 	
     public void addNotify()
@@ -118,87 +119,17 @@ class GamePanel extends JPanel implements KeyListener{
     	jumpCooldown();
     }
     
-    public void checkPlatformCollide()
-    {
-    	boolean onPlatform = false;
-    	for(platform p : platforms)
-    	{
-			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+40,mario.getWidth()+10,mario.getHeight()-40); //player has 10 pixel clearance for x position
-			Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
-			if(mario.getVY() >= 0 && mario.getJump() == true)
-			{
-	    		if(m.intersects(plat))
-	    		{
-	    			onPlatform = true;
-					mario.setY(p.getY()-70);
-					mario.setVY(0);
-					mario.setJump(false);
-					jCooldown = true;
-	    		}
-			}	
-    	}
-    	if(onPlatform == false && mario.getY() != ground)
-    	{
-    		mario.setJump(true);
-    	}
-    }
-    
-    public void jumpCooldown()
-    {
-    	if(jCooldown == true)
-    	{
-    		jumpWait = true;
-    		jCooldownCount += 1;
-    		if(jCooldownCount == 10)
-    		{
-	    		jumpWait = false;
-	    		jCooldownCount = 0;
-	    		jCooldown = false;
-    		}
-    	}
-    }
-    
-    public void loadPlatforms()
-    {
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	for(int i=0;i<70;i++)
-    	{
-    		plx = rand.nextInt(9000) + 500;
-    		ply = rand.nextInt(450) + 10;
-    		size = rand.nextInt(220) + 70;
-    		for(platform p : platforms)
-    		{
-    			Rectangle newRect = new Rectangle(plx,ply,size,10);
-    			Rectangle oldRect = new Rectangle(p.getX()-10,p.getY()-40,p.getSizeX()+20,p.getSizeY()+80);
-    			if(newRect.intersects(oldRect))
-    			{
-    				sameSpot = true;
-    			}
-    		}
-    		if(sameSpot == false)
-    		{
-    			platforms.add(new platform(plx,ply,size,10));
-    		}
-    		else
-    		{
-    			sameSpot = false;
-    		}
-    	}
-    }
-    
-    public void loadCoins()
-    {
-		
-    }
-    
     public void moveBackLeft()
     {
 		backX -= 4;
 		for(platform p : platforms)
 		{
 			p.addX(-4);
-		}	
+		}
+		for(coin c : coins)
+		{
+			c.addX(-4);
+		}
     }
     public void moveBackRight()
     {
@@ -206,7 +137,11 @@ class GamePanel extends JPanel implements KeyListener{
 		for(platform p : platforms)
 		{
 			p.addX(+4);
-		}	
+		}
+		for(coin c : coins)
+		{
+			c.addX(+4);
+		}
     }
 	
 	public void move()
@@ -258,6 +193,91 @@ class GamePanel extends JPanel implements KeyListener{
 		}
 	}
 	
+    public void jumpCooldown()
+    {
+    	if(jCooldown == true)
+    	{
+    		jumpWait = true;
+    		jCooldownCount += 1;
+    		if(jCooldownCount == 10)
+    		{
+	    		jumpWait = false;
+	    		jCooldownCount = 0;
+	    		jCooldown = false;
+    		}
+    	}
+    }
+    
+    public void loadPlatforms()
+    {
+    	boolean sameSpot = false;
+    	Random rand = new Random();
+    	for(int i=0;i<70;i++)
+    	{
+    		plx = rand.nextInt(9000) + 500;
+    		ply = rand.nextInt(450) + 10;
+    		size = rand.nextInt(220) + 70;
+    		for(platform p : platforms)
+    		{
+    			Rectangle newRect = new Rectangle(plx,ply,size,10);
+    			Rectangle oldRect = new Rectangle(p.getX()-10,p.getY()-40,p.getSizeX()+20,p.getSizeY()+80);
+    			if(newRect.intersects(oldRect))
+    			{
+    				sameSpot = true;
+    			}
+    		}
+    		if(sameSpot == false)
+    		{
+    			platforms.add(new platform(plx,ply,size,10));
+    		}
+    		else
+    		{
+    			sameSpot = false;
+    		}
+    	}
+    }
+    
+    public void loadCoins()
+    {
+    	int r = 0;
+    	int x = 0;
+    	Random rand = new Random();
+		for(platform p : platforms)
+		{
+			r = rand.nextInt(3);
+			if(r == 1) // 1 in 3 chance
+			{
+				x = rand.nextInt(p.getSizeX() - 10);
+				coins.add(new coin(p.getX() + x,p.getY() - 25,10,20,5,false));
+			}
+		}
+    }
+    
+    public void checkPlatformCollide()
+    {
+    	boolean onPlatform = false;
+    	for(platform p : platforms)
+    	{
+			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+40,mario.getWidth()+10,mario.getHeight()-40); //player has 10 pixel clearance for x position
+			Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
+			if(mario.getVY() >= 0 && mario.getJump() == true)
+			{
+	    		if(m.intersects(plat))
+	    		{
+	    			onPlatform = true;
+					mario.setY(p.getY()-70);
+					mario.setVY(0);
+					mario.setJump(false);
+					jCooldown = true;
+	    		}
+			}	
+    	}
+    	if(onPlatform == false && mario.getY() != ground)
+    	{
+    		mario.setJump(true);
+    	}
+    }
+	
     public void keyTyped(KeyEvent e) {}
 
     public void keyPressed(KeyEvent e)
@@ -284,6 +304,11 @@ class GamePanel extends JPanel implements KeyListener{
 			Color platTopColor = new Color(67,144,0);
 			g.setColor(platTopColor);  
 			g.fillRect(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
+		}
+		for(coin c : coins)
+		{
+			g.setColor(Color.yellow);  
+			g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
 		}
 		g.setColor(Color.red);  
 		g.fillRect(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
@@ -410,13 +435,17 @@ class coin
 	private int Y;
 	private int sizeX;
 	private int sizeY;
+	private int points;
+	private boolean collected;
 	
-	public coin(int cx, int cy, int sx, int sy)
+	public coin(int cx, int cy, int sx, int sy, int p, boolean c)
 	{
 		X = cx;
 		Y = cy;
 		sizeX = sx;
 		sizeY = sy;
+		points = p;
+		collected = c;
 	}
 	
 	public int getX()
