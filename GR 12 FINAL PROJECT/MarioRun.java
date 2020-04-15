@@ -59,17 +59,15 @@ class GamePanel extends JPanel implements KeyListener{
 	
 	private int backX = 0;
 	
-	private int ground = 490;
+	private int ground = 555-65;
+	
+	private int collectedCoins = 0;
 	
 	private boolean shiftLeft = false;
 	private boolean shiftRight = false;
 	
 	private ArrayList<platform>platforms = new ArrayList<platform>();
 	private ArrayList<coin>coins = new ArrayList<coin>();
-	
-	private int plx;
-	private int ply;
-	private int size;
 	
 	private boolean jCooldown = false;
 	private int jCooldownCount = 0;
@@ -115,8 +113,24 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void update()
     {
+    	System.out.println(collectedCoins);
+    	checkCollectedCoins();
     	checkPlatformCollide();
+    	checkCoinCollide();
     	jumpCooldown();
+    }
+    
+    public void checkCollectedCoins()
+    {
+    	int count = 0;
+    	for(coin c : coins)
+    	{
+    		if(c.getCollected()==true)
+    		{
+    			count += c.getPoints();
+    		}
+    	}
+    	collectedCoins = count;
     }
     
     public void moveBackLeft()
@@ -169,7 +183,7 @@ class GamePanel extends JPanel implements KeyListener{
 		
 		Point mouse = MouseInfo.getPointerInfo().getLocation();
 		Point offset = getLocationOnScreen();
-		System.out.println("("+(mouse.x-offset.x)+", "+(mouse.y-offset.y)+")");
+		//System.out.println("("+(mouse.x-offset.x)+", "+(mouse.y-offset.y)+")");
 	}
 	
 	public void jump()
@@ -210,6 +224,10 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void loadPlatforms()
     {
+		int plx;
+		int ply;
+		int size;
+    	
     	boolean sameSpot = false;
     	Random rand = new Random();
     	for(int i=0;i<70;i++)
@@ -239,17 +257,45 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void loadCoins()
     {
-    	int r = 0;
-    	int x = 0;
+    	int r;
+    	int x;
+    	int rground;
+    	boolean sameSpot = false;
     	Random rand = new Random();
+    	
+    	//coins on platforms
 		for(platform p : platforms)
 		{
-			r = rand.nextInt(3);
-			if(r == 1) // 1 in 3 chance
+			r = rand.nextInt(4);
+			if(r == 1) // 1 in 4 chance
 			{
 				x = rand.nextInt(p.getSizeX() - 10);
-				coins.add(new coin(p.getX() + x,p.getY() - 25,10,20,5,false));
+				coins.add(new coin(p.getX() + x,p.getY() - 25,10,20,1,false));
 			}
+		}
+		
+		//coins on ground
+		rground = rand.nextInt(7) + 5;
+		for(int i=0;i<rground;i++)
+		{
+			x = rand.nextInt(9000) + 500;
+    		for(coin c : coins)
+    		{
+    			Rectangle newRect = new Rectangle(x,555-25,10,20);
+    			Rectangle oldRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
+    			if(newRect.intersects(oldRect))
+    			{
+					sameSpot = true;
+    			}
+    		}
+      		if(sameSpot == false)
+    		{
+    			coins.add(new coin(x,555-25,10,20,1,false));
+    		}
+    		else
+    		{
+    			sameSpot = false;
+    		}
 		}
     }
     
@@ -277,6 +323,19 @@ class GamePanel extends JPanel implements KeyListener{
     		mario.setJump(true);
     	}
     }
+    
+    public void checkCoinCollide()
+    {
+    	for(coin c : coins)
+    	{
+			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+			Rectangle coinRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
+    		if(m.intersects(coinRect))
+    		{
+    			c.setCollected(true);
+    		}
+    	}
+    }
 	
     public void keyTyped(KeyEvent e) {}
 
@@ -297,7 +356,7 @@ class GamePanel extends JPanel implements KeyListener{
 		{
 			Color platBottomColor = new Color(213,132,22);
 			g.setColor(platBottomColor);  
-			g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),545 - p.getY());
+			g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),555-10 - p.getY());
 		}
 		for(platform p : platforms)
 		{
@@ -307,8 +366,11 @@ class GamePanel extends JPanel implements KeyListener{
 		}
 		for(coin c : coins)
 		{
-			g.setColor(Color.yellow);  
-			g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
+			if(c.getCollected() == false)
+			{
+				g.setColor(Color.yellow);  
+				g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
+			}
 		}
 		g.setColor(Color.red);  
 		g.fillRect(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
@@ -470,5 +532,19 @@ class coin
 	public int getSizeY()
 	{
 	    return sizeY;
+	}
+	
+	public int getPoints()
+	{
+	    return points;
+	}
+	
+	public boolean getCollected()
+	{
+	    return collected;
+	}
+	public void setCollected(boolean b)
+	{
+	    collected = b;
 	}
 }
