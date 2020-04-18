@@ -19,7 +19,7 @@ public class MarioRun extends JFrame implements ActionListener
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(900,650);
 
-		myTimer = new Timer(10, this);	 // trigger every 10 ms
+		myTimer = new Timer(15, this);	 // trigger every 10 ms
 
 
 		game = new GamePanel(this);
@@ -51,17 +51,16 @@ class GamePanel extends JPanel implements KeyListener{
 	private boolean []keys;
 	private MarioRun mainFrame;
 	
-	private Image back;
-	private Image tmp;
+	private Image back, tmp, currPic;
 	
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
 	
+	private ArrayList<Enemy> enemies = new ArrayList<Enemy>();
+	
 	private int backX = 0;
 	
-	private int ground = 555-65;
-	
-	private int collectedCoins = 0;
+	private int ground = 490;
 	
 	private boolean shiftLeft = false;
 	private boolean shiftRight = false;
@@ -69,9 +68,15 @@ class GamePanel extends JPanel implements KeyListener{
 	private ArrayList<platform>platforms = new ArrayList<platform>();
 	private ArrayList<coin>coins = new ArrayList<coin>();
 	
+	private int plx;
+	private int ply;
+	private int size;
+	private int frames;
+	
 	private boolean jCooldown = false;
 	private int jCooldownCount = 0;
 	private boolean jumpWait = false;
+	private boolean right, left;
 	
 	player mario = new player(430,ground,0,false,false,70,45);
 	
@@ -79,23 +84,31 @@ class GamePanel extends JPanel implements KeyListener{
 	{
 		keys = new boolean[KeyEvent.KEY_LAST+1];
 		back = new ImageIcon("MarioBackground.png").getImage().getScaledInstance(10000,650,Image.SCALE_SMOOTH);
-        for(int i=0; i<5; i++)
+        for(int i=0; i<8; i++)
         {
         	tmp = new ImageIcon("MarioPics/mariowalk" +Integer.toString(i)+".png").getImage().getScaledInstance(mario.getWidth(),mario.getHeight(),Image.SCALE_SMOOTH);
-    		if(i<=2)
+    		if(i<=3)
     		{
-    			marioRightWalkPics.add(tmp);
+    			for(int z=0; z<5; z++){
+    				marioRightWalkPics.add(tmp);
+    			}
+    			
     		}
         	else
         	{
-        		marioLeftWalkPics.add(tmp);
+        		for(int z=0; z<5; z++){
+    				marioLeftWalkPics.add(tmp);
+    			}
+        		
         	}
         }
+        currPic = marioRightWalkPics.get(0);
 		mainFrame = m;
 		setSize(800,600);
         addKeyListener(this);
         loadPlatforms();
         loadCoins();
+    	getGoombas();
 	}
 	
     public void addNotify()
@@ -113,24 +126,37 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void update()
     {
-    	System.out.println(collectedCoins);
-    	checkCollectedCoins();
+    	checkCond();
     	checkPlatformCollide();
-    	checkCoinCollide();
     	jumpCooldown();
     }
     
-    public void checkCollectedCoins()
+    public void getGoombas()
     {
-    	int count = 0;
-    	for(coin c : coins)
+    	try
     	{
-    		if(c.getCollected()==true)
+    		Scanner x = new Scanner(new BufferedReader(new FileReader("enemies.txt")));
+    		while (x.hasNextLine()) 
     		{
-    			count += c.getPoints();
+    			enemies.add(new Enemy(x.nextLine()));
     		}
+    		x.close();
     	}
-    	collectedCoins = count;
+    	catch(IOException ex){
+    		System.out.println(ex);
+            System.exit(1);
+    	}
+    }
+    
+    public void checkCond()
+    	{
+    		for(Enemy e: enemies){
+    			Rectangle goomba = new Rectangle(e.getX(), e.getY(), 43, 1);
+    			Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
+    			if(marioRect.intersects(goomba)){
+    				e.setCond(false);
+    			}
+    		}
     }
     
     public void moveBackLeft()
@@ -144,6 +170,9 @@ class GamePanel extends JPanel implements KeyListener{
 		{
 			c.addX(-4);
 		}
+		for(Enemy e: enemies){
+			e.addX(-4);
+		}
     }
     public void moveBackRight()
     {
@@ -156,12 +185,17 @@ class GamePanel extends JPanel implements KeyListener{
 		{
 			c.addX(+4);
 		}
+		for(Enemy e: enemies){
+			e.addX(4);
+		}
     }
 	
 	public void move()
 	{
 		if(keys[KeyEvent.VK_RIGHT] )
 		{
+			right = true;
+			left = false;
 			if(shiftRight == false)
 			{
 				mario.addX(-10);
@@ -172,6 +206,8 @@ class GamePanel extends JPanel implements KeyListener{
 		}
 		if(keys[KeyEvent.VK_LEFT] && backX <= 0)
 		{
+			right = false;
+			left = true;
 			if(shiftLeft == false)
 			{
 				mario.addX(10);
@@ -183,7 +219,7 @@ class GamePanel extends JPanel implements KeyListener{
 		
 		Point mouse = MouseInfo.getPointerInfo().getLocation();
 		Point offset = getLocationOnScreen();
-		//System.out.println("("+(mouse.x-offset.x)+", "+(mouse.y-offset.y)+")");
+		System.out.println(mario.getY());
 	}
 	
 	public void jump()
@@ -224,10 +260,6 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void loadPlatforms()
     {
-		int plx;
-		int ply;
-		int size;
-    	
     	boolean sameSpot = false;
     	Random rand = new Random();
     	for(int i=0;i<70;i++)
@@ -257,45 +289,17 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void loadCoins()
     {
-    	int r;
-    	int x;
-    	int rground;
-    	boolean sameSpot = false;
+    	int r = 0;
+    	int x = 0;
     	Random rand = new Random();
-    	
-    	//coins on platforms
 		for(platform p : platforms)
 		{
-			r = rand.nextInt(4);
-			if(r == 1) // 1 in 4 chance
+			r = rand.nextInt(3);
+			if(r == 1) // 1 in 3 chance
 			{
 				x = rand.nextInt(p.getSizeX() - 10);
-				coins.add(new coin(p.getX() + x,p.getY() - 25,10,20,1,false));
+				coins.add(new coin(p.getX() + x,p.getY() - 25,10,20,5,false));
 			}
-		}
-		
-		//coins on ground
-		rground = rand.nextInt(7) + 5;
-		for(int i=0;i<rground;i++)
-		{
-			x = rand.nextInt(9000) + 500;
-    		for(coin c : coins)
-    		{
-    			Rectangle newRect = new Rectangle(x,555-25,10,20);
-    			Rectangle oldRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-    			if(newRect.intersects(oldRect))
-    			{
-					sameSpot = true;
-    			}
-    		}
-      		if(sameSpot == false)
-    		{
-    			coins.add(new coin(x,555-25,10,20,1,false));
-    		}
-    		else
-    		{
-    			sameSpot = false;
-    		}
 		}
     }
     
@@ -323,19 +327,6 @@ class GamePanel extends JPanel implements KeyListener{
     		mario.setJump(true);
     	}
     }
-    
-    public void checkCoinCollide()
-    {
-    	for(coin c : coins)
-    	{
-			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-			Rectangle coinRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-    		if(m.intersects(coinRect))
-    		{
-    			c.setCollected(true);
-    		}
-    	}
-    }
 	
     public void keyTyped(KeyEvent e) {}
 
@@ -346,17 +337,21 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void keyReleased(KeyEvent e)
     {
+    	right = false;
+    	left = false;
         keys[e.getKeyCode()] = false;
     }
 
     public void paintComponent(Graphics g)
     { 	
+    	Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
     	g.drawImage(back,backX,0,null);
+    	g.drawRect(marioRect.x, marioRect.y, marioRect.width, marioRect.height);
 		for(platform p : platforms)
 		{
 			Color platBottomColor = new Color(213,132,22);
 			g.setColor(platBottomColor);  
-			g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),555-10 - p.getY());
+			g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),545 - p.getY());
 		}
 		for(platform p : platforms)
 		{
@@ -366,14 +361,58 @@ class GamePanel extends JPanel implements KeyListener{
 		}
 		for(coin c : coins)
 		{
-			if(c.getCollected() == false)
-			{
-				g.setColor(Color.yellow);  
-				g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-			}
+			g.setColor(Color.yellow);  
+			g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
 		}
-		g.setColor(Color.red);  
-		g.fillRect(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+		g.setColor(Color.red);
+		
+		if(!right && !left){
+        	g.drawImage(currPic, mario.getX(), mario.getY(), null);
+        }
+		if(right){
+        	currPic = marioRightWalkPics.get(0);
+            g.drawImage(marioRightWalkPics.get(frames),mario.getX(),mario.getY(),null);
+        }
+        if(left){
+        	currPic = marioLeftWalkPics.get(0);
+            g.drawImage(marioLeftWalkPics.get(frames),mario.getX(),mario.getY(),null);
+        }
+		
+		for(Enemy enemy: enemies){
+		//	System.out.println(enemy.getCond()+"cond");
+		//	Rectangle goomba = new Rectangle(enemy.getX(), enemy.getY(), 43, 1);
+			//g.drawRect(goomba.x,goomba.y,goomba.width,goomba.height);
+			
+			if(enemy.getCond()){
+				if(enemy.getX() <= enemy.getMinX()){
+				enemy.setLeft(false);
+				enemy.setRight(true);	
+				}	
+				if(enemy.getX() >= enemy.getMaxX()){
+					enemy.setLeft(true);
+					enemy.setRight(false);	
+				}
+				if(enemy.getLeft()){
+					//if(!left
+						enemy.addX(-1);
+					System.out.println(right);
+					System.out.println(left);
+					System.out.println(enemy.getX());
+					g.drawImage(enemy.getPic(), enemy.getX(), enemy.getY(), null);
+				}
+				if(enemy.getRight()){
+					//if(!right){
+						enemy.addX(1);
+					System.out.println(enemy.getX());
+					g.drawImage(enemy.getPic(), enemy.getX(), enemy.getY(), null);
+				}
+			}	
+		}
+		System.out.println("backx"+backX);
+		frames++;
+		if(frames==20){
+			frames=0;	
+		}
     }
 }
 
@@ -533,18 +572,65 @@ class coin
 	{
 	    return sizeY;
 	}
-	
-	public int getPoints()
-	{
-	    return points;
+}
+class Enemy{
+	private int x,y, minX, maxX, origX;
+	private Image enePic;
+	private boolean right, left, cond;
+
+	public Enemy(String text){
+		String[]line = text.split(" ");
+		x=Integer.parseInt(line[0]);
+		origX=Integer.parseInt(line[0]);
+		y=Integer.parseInt(line[1]);
+		minX = Integer.parseInt(line[2]);
+		maxX = Integer.parseInt(line[3]);
+		if(line[4].equals("goomba")){
+			enePic = new ImageIcon("goombaPic2.png").getImage();	
+		}
+		left = true;
+		cond = true;
 	}
-	
-	public boolean getCollected()
-	{
-	    return collected;
+	public int getX(){
+		return x;
 	}
-	public void setCollected(boolean b)
-	{
-	    collected = b;
+	public int getOrigX(){
+		return origX;
+	}
+	public int getY(){
+		return y;
+	}
+	public boolean getCond(){
+		return cond;
+	}
+	public void setRight(boolean bool){
+		right = bool;
+	}
+	public void setLeft(boolean bool){
+		left = bool;
+	}
+	public void setCond(boolean bool){
+		cond = bool;
+	}
+	public boolean getRight(){
+		return right;
+	}
+	public boolean getLeft(){
+		return left;
+	}
+	public void addX(int num){
+		x += num;
+	}
+	public void addY(int num){
+		y += num;
+	}
+	public int getMinX(){
+		return minX;
+	}
+	public int getMaxX(){
+		return maxX;
+	}
+	public Image getPic(){
+		return enePic;
 	}
 }
