@@ -329,7 +329,7 @@ class GamePanel extends JPanel implements KeyListener{
 		}
 		
 		//coins on ground
-		rground = rand.nextInt(7) + 5;
+		rground = rand.nextInt(10) + 5;
 		for(int i=0;i<rground;i++)
 		{
 			x = rand.nextInt(9000) + 500;
