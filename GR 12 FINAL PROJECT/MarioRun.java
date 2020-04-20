@@ -56,8 +56,6 @@ class GamePanel extends JPanel implements KeyListener{
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
 	
-	private ArrayList<Enemy> enemies = new ArrayList<Enemy>();
-	
 	private int backX = 0;
 	
 	private int ground = 555-65;
@@ -69,6 +67,8 @@ class GamePanel extends JPanel implements KeyListener{
 	
 	private ArrayList<platform>platforms = new ArrayList<platform>();
 	private ArrayList<coin>coins = new ArrayList<coin>();
+	
+	private ArrayList<goomba> goombas = new ArrayList<goomba>();
 	
 	private int plx;
 	private int ply;
@@ -110,7 +110,7 @@ class GamePanel extends JPanel implements KeyListener{
         addKeyListener(this);
         loadPlatforms();
         loadCoins();
-    	getGoombas();
+    	loadGoombas();
 	}
 	
     public void addNotify()
@@ -129,10 +129,10 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void update()
     {
-    	checkCond();
     	checkCollectedCoins();
     	checkPlatformCollide();
     	checkCoinCollide();
+    	moveGoombas();
     }
     
     public void checkCollectedCoins()
@@ -148,38 +148,6 @@ class GamePanel extends JPanel implements KeyListener{
     	collectedCoins = count;
     }
     
-    
-    public void getGoombas()
-    {
-    	try
-    	{
-    		Scanner x = new Scanner(new BufferedReader(new FileReader("enemies.txt")));
-    		while (x.hasNextLine()) 
-    		{
-    			enemies.add(new Enemy(x.nextLine()));
-    		}
-    		x.close();
-    	}
-    	catch(IOException ex)
-    	{
-    		System.out.println(ex);
-            System.exit(1);
-    	}
-    }
-    
-    public void checkCond()
-    {
-		for(Enemy e: enemies)
-		{
-			Rectangle goomba = new Rectangle(e.getX(), e.getY(), 43, 1);
-			Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
-			if(marioRect.intersects(goomba))
-			{
-				e.setCond(false);
-			}
-		}
-    }
-    
     public void moveBackLeft()
     {
 		backX -= 4;
@@ -191,8 +159,11 @@ class GamePanel extends JPanel implements KeyListener{
 		{
 			c.addX(-4);
 		}
-		for(Enemy e: enemies){
-			e.addX(-4);
+		for(goomba g : goombas)
+		{
+			g.addX(-4);
+			g.addMin(-4);
+			g.addMax(-4);
 		}
     }
     public void moveBackRight()
@@ -206,8 +177,11 @@ class GamePanel extends JPanel implements KeyListener{
 		{
 			c.addX(+4);
 		}
-		for(Enemy e: enemies){
-			e.addX(4);
+		for(goomba g : goombas)
+		{
+			g.addX(+4);
+			g.addMin(+4);
+			g.addMax(+4);
 		}
     }
 	
@@ -279,6 +253,37 @@ class GamePanel extends JPanel implements KeyListener{
     		}
     	}
     }
+  
+    public void moveGoombas()
+    {
+		for(goomba g : goombas)
+		{
+			if(g.getLeft() == true)
+			{
+				if(g.getX() >= g.getMin())
+				{
+					g.addX(-1);
+				}
+				else
+				{
+					g.setLeft(false);
+					g.setRight(true);
+				}
+			}
+			if(g.getRight() == true)
+			{
+				if(g.getX() <= g.getMax())
+				{
+					g.addX(+1);
+				}
+				else
+				{
+					g.setLeft(true);
+					g.setRight(false);
+				}
+			}
+		}
+    }
     
     public void loadPlatforms()
     {
@@ -345,6 +350,48 @@ class GamePanel extends JPanel implements KeyListener{
       		if(sameSpot == false)
     		{
     			coins.add(new coin(x,555-25,10,20,1,false));
+    		}
+    		else
+    		{
+    			sameSpot = false;
+    		}
+		}
+    }
+    
+    public void loadGoombas()
+    {
+    	int r;
+    	int x;
+    	int rground;
+    	boolean sameSpot = false;
+    	Random rand = new Random();
+    	
+		for(platform p : platforms)
+		{
+			r = rand.nextInt(6);
+			if(r == 1)
+			{
+				x = rand.nextInt(p.getSizeX() - 30);
+				goombas.add(new goomba(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,true,false));
+			}
+		}
+		
+		rground = rand.nextInt(5)+2;
+		for(int i=0;i<rground;i++)
+		{
+			x = rand.nextInt(9000) + 500;
+    		for(goomba g : goombas)
+    		{
+    			Rectangle newRect = new Rectangle(x,555-25,10,20);
+    			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
+    			if(newRect.intersects(oldRect))
+    			{
+					sameSpot = true;
+    			}
+    		}
+      		if(sameSpot == false)
+    		{
+				goombas.add(new goomba(x,555-30,30,30,x,x+500,true,false));
     		}
     		else
     		{
@@ -430,6 +477,11 @@ class GamePanel extends JPanel implements KeyListener{
 				g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
 			}
 		}
+		for(goomba gb : goombas)
+		{
+			g.setColor(Color.black);  
+			g.fillRect(gb.getX(),gb.getY(),gb.getSizeX(),gb.getSizeY());
+		}
 		
 		if(!right && !left)
 		{
@@ -445,40 +497,7 @@ class GamePanel extends JPanel implements KeyListener{
         	currPic = marioLeftWalkPics.get(0);
             g.drawImage(marioLeftWalkPics.get(frames),mario.getX(),mario.getY(),null);
         }
-		
-		for(Enemy enemy: enemies)
-		{
-			if(enemy.getCond())
-			{
-				if(enemy.getX() <= enemy.getMinX())
-				{
-					enemy.setLeft(false);
-					enemy.setRight(true);	
-				}
-				if(enemy.getX() >= enemy.getMaxX())
-				{
-					enemy.setLeft(true);
-					enemy.setRight(false);	
-				}
-				if(enemy.getLeft())
-				{
-					enemy.addX(-1);
-					System.out.println(right);
-					System.out.println(left);
-					System.out.println(enemy.getX());
-					g.drawImage(enemy.getPic(), enemy.getX(), enemy.getY(), null);
-				}
-				if(enemy.getRight())
-				{
-					enemy.addX(1);	
-					System.out.println(enemy.getX());
-					g.drawImage(enemy.getPic(), enemy.getX(), enemy.getY(), null);
-				}
-				
-				System.out.println("backx"+backX);
-				frames++;
-    		}
-		}
+		frames++;
 		if(frames==20)
 		{
 			frames=0;	
@@ -662,81 +681,89 @@ class coin
 	}
 }
 
-class Enemy
+class goomba
 {
-	private int x,y, minX, maxX, origX;
-	private Image enePic;
-	private boolean right, left, cond;
-
-	public Enemy(String text)
+	private int X;
+	private int Y;
+	private int sizeX;
+	private int sizeY;
+	private int minMove;
+	private int maxMove;
+	private boolean left;
+	private boolean right;
+	
+	public goomba(int plx, int ply, int sx, int sy, int mi, int ma, boolean l, boolean r)
 	{
-		String[]line = text.split(" ");
-		x=Integer.parseInt(line[0]);
-		origX=Integer.parseInt(line[0]);
-		y=Integer.parseInt(line[1]);
-		minX = Integer.parseInt(line[2]);
-		maxX = Integer.parseInt(line[3]);
-		if(line[4].equals("goomba"))
-		{
-			enePic = new ImageIcon("goombaPic2.png").getImage();	
-		}
-		left = true;
-		cond = true;
+		X = plx;
+		Y = ply;
+		sizeX = sx;
+		sizeY = sy;
+		minMove = mi;
+		maxMove = ma;
+	 	left = l;
+	 	right = r;
 	}
+	
 	public int getX()
 	{
-		return x;
-	}
-	public int getOrigX()
-	{
-		return origX;
-	}
-	public int getY()
-	{
-		return y;
-	}
-	public boolean getCond()
-	{
-		return cond;
-	}
-	public void setRight(boolean bool)
-	{
-		right = bool;
-	}
-	public void setLeft(boolean bool)
-	{
-		left = bool;
-	}
-	public void setCond(boolean bool)
-	{
-		cond = bool;
-	}
-	public boolean getRight()
-	{
-		return right;
-	}
-	public boolean getLeft()
-	{
-		return left;
+	    return X;
 	}
 	public void addX(int num)
 	{
-		x += num;
+		X += num;
 	}
-	public void addY(int num)
+	
+	public int getY()
 	{
-		y += num;
+	    return Y;
 	}
-	public int getMinX()
+	
+	public int getSizeX()
 	{
-		return minX;
+	    return sizeX;
 	}
-	public int getMaxX()
+	
+	public int getSizeY()
 	{
-		return maxX;
+	    return sizeY;
 	}
-	public Image getPic()
+	
+	public int getMin()
 	{
-		return enePic;
+	    return minMove;
+	}
+	
+	public int getMax()
+	{
+	    return maxMove;
+	}
+	
+	public void addMin(int num)
+	{
+		minMove += num;
+	}
+	public void addMax(int num)
+	{
+		maxMove += num;
+	}
+	
+	public boolean getLeft()
+	{
+	    return left;
+	}
+	
+	public boolean getRight()
+	{
+	    return right;
+	}
+	
+	public void setLeft(boolean b)
+	{
+	    left = b;
+	}
+	
+	public void setRight(boolean b)
+	{
+	    right = b;
 	}
 }
