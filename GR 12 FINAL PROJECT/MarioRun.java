@@ -58,7 +58,7 @@ class GamePanel extends JPanel implements KeyListener{
 	
 	private int backX = 0;
 	
-	private int ground = 555-65;
+	private int ground = 555-70;
 	
 	private int collectedCoins = 0;
 	
@@ -132,7 +132,9 @@ class GamePanel extends JPanel implements KeyListener{
     	checkCollectedCoins();
     	checkPlatformCollide();
     	checkCoinCollide();
+    	checkGoombaCollide();
     	moveGoombas();
+    	System.out.println(mario.getJump());
     }
     
     public void checkCollectedCoins()
@@ -214,7 +216,7 @@ class GamePanel extends JPanel implements KeyListener{
 		
 		Point mouse = MouseInfo.getPointerInfo().getLocation();
 		Point offset = getLocationOnScreen();
-		System.out.println(mario.getY());
+		//System.out.println(mario.getY());
 	}
 	
 	public void jump()
@@ -222,7 +224,7 @@ class GamePanel extends JPanel implements KeyListener{
 		if(keys[KeyEvent.VK_UP] && mario.getJump()==false && jumpWait == false)
 		{
 			mario.setJump(true);
-			mario.setVY(-21);
+			mario.setVY(-20);
 		}
 		if(mario.getJump() == true)
 		{
@@ -372,7 +374,7 @@ class GamePanel extends JPanel implements KeyListener{
 			if(r == 1)
 			{
 				x = rand.nextInt(p.getSizeX() - 30);
-				goombas.add(new goomba(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,true,false));
+				goombas.add(new goomba(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,true,false,false));
 			}
 		}
 		
@@ -391,7 +393,7 @@ class GamePanel extends JPanel implements KeyListener{
     		}
       		if(sameSpot == false)
     		{
-				goombas.add(new goomba(x,555-30,30,30,x,x+500,true,false));
+				goombas.add(new goomba(x,555-30,30,30,x,x+500,true,false,false));
     		}
     		else
     		{
@@ -437,6 +439,25 @@ class GamePanel extends JPanel implements KeyListener{
     		}
     	}
     }
+    
+    public void checkGoombaCollide()
+    {
+    	for(goomba g : goombas)
+    	{
+			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+			Rectangle goombaRect = new Rectangle(g.getX(),g.getY(),g.getSizeX(),g.getSizeY());
+    		if(m.intersects(goombaRect))
+    		{
+    			if(g.getKilled()==false)
+    			{
+    				if(mario.getVY() >= 2)
+    				{
+    					g.setKilled(true);
+    				}
+    			}
+    		}
+    	}
+    }
 	
     public void keyTyped(KeyEvent e) {}
 
@@ -479,8 +500,11 @@ class GamePanel extends JPanel implements KeyListener{
 		}
 		for(goomba gb : goombas)
 		{
-			g.setColor(Color.black);  
-			g.fillRect(gb.getX(),gb.getY(),gb.getSizeX(),gb.getSizeY());
+			if(gb.getKilled() == false)
+			{
+				g.setColor(Color.black);  
+				g.fillRect(gb.getX(),gb.getY(),gb.getSizeX(),gb.getSizeY());
+			}
 		}
 		
 		if(!right && !left)
@@ -691,8 +715,9 @@ class goomba
 	private int maxMove;
 	private boolean left;
 	private boolean right;
+	private boolean killed;
 	
-	public goomba(int plx, int ply, int sx, int sy, int mi, int ma, boolean l, boolean r)
+	public goomba(int plx, int ply, int sx, int sy, int mi, int ma, boolean l, boolean r, boolean k)
 	{
 		X = plx;
 		Y = ply;
@@ -702,6 +727,7 @@ class goomba
 		maxMove = ma;
 	 	left = l;
 	 	right = r;
+	 	killed = k;
 	}
 	
 	public int getX()
@@ -765,5 +791,15 @@ class goomba
 	public void setRight(boolean b)
 	{
 	    right = b;
+	}
+	
+	public boolean getKilled()
+	{
+	    return killed;
+	}
+	
+	public void setKilled(boolean b)
+	{
+	    killed = b;
 	}
 }
