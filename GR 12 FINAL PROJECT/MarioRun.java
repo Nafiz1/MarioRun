@@ -70,14 +70,18 @@ class GamePanel extends JPanel implements KeyListener{
 	
 	private ArrayList<goomba> goombas = new ArrayList<goomba>();
 	
-	private int plx;
-	private int ply;
-	private int size;
 	private int frames;
 	
 	private boolean jCooldown = false;
 	private int jCooldownCount = 0;
 	private boolean jumpWait = false;
+	
+	private boolean inv = false;
+	private int invincibleCount = 0;
+	private boolean invincible = false;
+	
+	private int lives = 5;
+
 	private boolean right, left;
 	
 	player mario = new player(430,ground,0,false,false,70,45);
@@ -125,6 +129,7 @@ class GamePanel extends JPanel implements KeyListener{
     	move();
     	jump();
     	jumpCooldown();
+    	invincibilityCooldown();
     }
     
     public void update()
@@ -148,6 +153,21 @@ class GamePanel extends JPanel implements KeyListener{
     		}
     	}
     	collectedCoins = count;
+    }
+    
+    public void invincibilityCooldown()
+    {
+    	if(inv == true)
+    	{
+    		invincible = true;
+    		invincibleCount += 1;
+    		if(invincibleCount == 60)
+    		{
+	    		invincible = false;
+	    		invincibleCount = 0;
+	    		inv = false;
+    		}
+    	}
     }
     
     public void moveBackLeft()
@@ -289,6 +309,9 @@ class GamePanel extends JPanel implements KeyListener{
     
     public void loadPlatforms()
     {
+		int plx;
+		int ply;
+		int size;
     	boolean sameSpot = false;
     	Random rand = new Random();
     	for(int i=0;i<70;i++)
@@ -454,6 +477,14 @@ class GamePanel extends JPanel implements KeyListener{
     				{
     					g.setKilled(true);
     				}
+    				else
+    				{
+    					if(invincible == false)
+    					{
+	    					lives -= 1;
+							inv = true;
+    					}
+    				}
     			}
     		}
     	}
@@ -529,6 +560,8 @@ class GamePanel extends JPanel implements KeyListener{
 		g.setColor(Color.white);  
 		g.setFont(new Font("Dialogue", Font.PLAIN, 25));
 		g.drawString(Integer.toString(collectedCoins)+" COINS", 730, 35);
+		g.setFont(new Font("Dialogue", Font.PLAIN, 25));
+		g.drawString(Integer.toString(lives)+" LIVES", 70, 35);
 	}
 }	
 
@@ -717,10 +750,10 @@ class goomba
 	private boolean right;
 	private boolean killed;
 	
-	public goomba(int plx, int ply, int sx, int sy, int mi, int ma, boolean l, boolean r, boolean k)
+	public goomba(int gx, int gy, int sx, int sy, int mi, int ma, boolean l, boolean r, boolean k)
 	{
-		X = plx;
-		Y = ply;
+		X = gx;
+		Y = gy;
 		sizeX = sx;
 		sizeY = sy;
 		minMove = mi;
