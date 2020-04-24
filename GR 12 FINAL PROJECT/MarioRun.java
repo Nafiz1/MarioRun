@@ -21,7 +21,7 @@ public class MarioRun extends JFrame implements ActionListener
 
 		myTimer = new Timer(15, this);	 // trigger every 10 ms
 
-
+	
 		game = new GamePanel(this);
 		add(game);
 
@@ -51,7 +51,7 @@ class GamePanel extends JPanel implements KeyListener{
 	private boolean []keys;
 	private MarioRun mainFrame;
 	
-	private Image back, tmp, currPic;
+	private Image back, tmp, currPic, coinPic, lifePic;
 	
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
@@ -84,12 +84,16 @@ class GamePanel extends JPanel implements KeyListener{
 
 	private boolean right, left;
 	
+	private Font marioFont;
+		
 	player mario = new player(430,ground,0,false,false,70,45);
 	
 	public GamePanel(MarioRun m)
 	{
 		keys = new boolean[KeyEvent.KEY_LAST+1];
 		back = new ImageIcon("MarioBackground.png").getImage().getScaledInstance(10000,650,Image.SCALE_SMOOTH);
+		coinPic = new ImageIcon("Mariopics/coin.png").getImage().getScaledInstance(20,30,Image.SCALE_SMOOTH);
+		lifePic = new ImageIcon("Mariopics/lifeMushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
         for(int i=0; i<8; i++)
         {
         	tmp = new ImageIcon("MarioPics/mariowalk" +Integer.toString(i)+".png").getImage().getScaledInstance(mario.getWidth()+5,mario.getHeight()+5,Image.SCALE_SMOOTH);
@@ -108,6 +112,16 @@ class GamePanel extends JPanel implements KeyListener{
         		
         	}
         }
+        try
+		{
+			marioFont = Font.createFont(Font.TRUETYPE_FONT, new File("SuperMario.ttf")).deriveFont(48f);
+		} catch(IOException ex){
+			System.out.println(ex);
+			System.exit(1);
+		} catch(FontFormatException ex){
+			System.out.println(ex);
+			System.exit(1);
+		}
         currPic = marioRightWalkPics.get(0);
 		mainFrame = m;
 		setSize(800,600);
@@ -280,7 +294,9 @@ class GamePanel extends JPanel implements KeyListener{
     {
 		for(goomba g : goombas)
 		{
-			if(g.getLeft() == true)
+			if(!g.getKilled())
+			{
+				if(g.getLeft() == true)
 			{
 				if(g.getX() >= g.getMin())
 				{
@@ -292,18 +308,20 @@ class GamePanel extends JPanel implements KeyListener{
 					g.setRight(true);
 				}
 			}
-			if(g.getRight() == true)
-			{
-				if(g.getX() <= g.getMax())
+				if(g.getRight() == true)
 				{
-					g.addX(+1);
-				}
-				else
-				{
-					g.setLeft(true);
-					g.setRight(false);
+					if(g.getX() <= g.getMax())
+					{
+						g.addX(+1);
+					}
+					else
+					{
+						g.setLeft(true);
+						g.setRight(false);
+					}
 				}
 			}
+			
 		}
     }
     
@@ -397,7 +415,7 @@ class GamePanel extends JPanel implements KeyListener{
 			if(r == 1)
 			{
 				x = rand.nextInt(p.getSizeX() - 30);
-				goombas.add(new goomba(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,true,false,false));
+				goombas.add(new goomba(p.	getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,true,false,false));
 			}
 		}
 		
@@ -476,6 +494,7 @@ class GamePanel extends JPanel implements KeyListener{
     				if(mario.getVY() >= 2)
     				{
     					g.setKilled(true);
+    					mario.setVY(-10);
     				}
     				else
     				{
@@ -533,9 +552,42 @@ class GamePanel extends JPanel implements KeyListener{
 		{
 			if(gb.getKilled() == false)
 			{
-				g.setColor(Color.black);  
-				g.fillRect(gb.getX(),gb.getY(),gb.getSizeX(),gb.getSizeY());
+				if(gb.getRight())
+				{
+					g.drawImage(gb.getRightImage(),gb.getX(),gb.getY(),null);
+				}
+				if(gb.getLeft())
+				{
+					g.drawImage(gb.getLeftImage(),gb.getX(),gb.getY(),null);
+				}
 			}
+			
+			gb.addFrames(1);
+			if(gb.getFrames()==30){
+				gb.addFrames(-gb.getFrames()); // reset frames
+			}
+			
+			if(gb.getKilled())
+			{
+				if(gb.getLeft())
+				{ 
+					if(gb.getKillTimer()<=10) // dead goomba appears for a bit
+					{
+						g.drawImage(gb.getDeadImage(0),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
+						gb.setKillTimer(gb.getKillTimer()+1);
+					}
+
+				}
+				if(gb.getRight())
+				{ 
+					if(gb.getKillTimer()<=10)
+					{
+						g.drawImage(gb.getDeadImage(1),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
+						gb.setKillTimer(gb.getKillTimer()+1);
+					}
+
+				}
+			}	
 		}
 		
 		if(!right && !left)
@@ -557,11 +609,13 @@ class GamePanel extends JPanel implements KeyListener{
 		{
 			frames=0;	
 		}
-		g.setColor(Color.white);  
-		g.setFont(new Font("Dialogue", Font.PLAIN, 25));
-		g.drawString(Integer.toString(collectedCoins)+" COINS", 730, 35);
-		g.setFont(new Font("Dialogue", Font.PLAIN, 25));
-		g.drawString(Integer.toString(lives)+" LIVES", 70, 35);
+		
+		g.setColor(Color.white);
+		g.drawImage(lifePic, 5, 7, null); 
+		g.drawImage(coinPic, 10, 40, null);
+		g.setFont(marioFont);
+		g.drawString("X"+Integer.toString(lives), 37, 35);
+		g.drawString(Integer.toString(collectedCoins), 33, 69);
 	}
 }	
 
@@ -742,13 +796,19 @@ class goomba
 {
 	private int X;
 	private int Y;
+	private int vx;
 	private int sizeX;
 	private int sizeY;
 	private int minMove;
 	private int maxMove;
+	private int frames;
+	private int killTimer;
 	private boolean left;
 	private boolean right;
 	private boolean killed;
+	private ArrayList<Image> goombaLeftPics = new ArrayList<Image>();
+	private ArrayList<Image> goombaRightPics = new ArrayList<Image>();
+	private ArrayList<Image> goombaDeadPics = new ArrayList<Image>();
 	
 	public goomba(int gx, int gy, int sx, int sy, int mi, int ma, boolean l, boolean r, boolean k)
 	{
@@ -761,6 +821,27 @@ class goomba
 	 	left = l;
 	 	right = r;
 	 	killed = k;
+	 	frames=0;
+	 	for(int i=0; i<12; i++)
+        {
+        	Image tmp = new ImageIcon("MarioPics/goombawalk" +Integer.toString(i)+".png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH);
+        	for(int x=0;x<5;x++)
+        	{
+        		if(i<6)
+        		{
+        			goombaLeftPics.add(tmp);
+        		}
+        		else
+        		{
+        			goombaRightPics.add(tmp);
+        		}
+        	}
+    		
+        }
+        for(int i=0; i<2; i++)
+        {
+        	goombaDeadPics.add(new ImageIcon("MarioPics/deadgoomba" +Integer.toString(i)+".png").getImage().getScaledInstance(sizeX, sizeY/2,Image.SCALE_SMOOTH));
+        }
 	}
 	
 	public int getX()
@@ -797,6 +878,26 @@ class goomba
 	    return maxMove;
 	}
 	
+	public int getKillTimer()
+	{
+	    return killTimer;
+	}
+	
+	public Image getRightImage()
+	{
+		return goombaRightPics.get(frames);
+	}
+	
+	public Image getLeftImage()
+	{
+		return goombaLeftPics.get(frames);
+	}
+	
+	public Image getDeadImage(int n)
+	{
+		return goombaDeadPics.get(n);
+	}
+	
 	public void addMin(int num)
 	{
 		minMove += num;
@@ -816,6 +917,10 @@ class goomba
 	    return right;
 	}
 	
+	public int getFrames()
+	{
+		return frames;
+	}
 	public void setLeft(boolean b)
 	{
 	    left = b;
@@ -824,6 +929,16 @@ class goomba
 	public void setRight(boolean b)
 	{
 	    right = b;
+	}
+	
+	public void setKillTimer(int n)
+	{
+	    killTimer = n;
+	}
+	
+	public void addFrames(int n)
+	{
+		frames += n;	
 	}
 	
 	public boolean getKilled()
