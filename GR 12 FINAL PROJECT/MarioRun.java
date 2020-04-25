@@ -115,10 +115,14 @@ class GamePanel extends JPanel implements KeyListener{
         try
 		{
 			marioFont = Font.createFont(Font.TRUETYPE_FONT, new File("SuperMario.ttf")).deriveFont(48f);
-		} catch(IOException ex){
+		}
+		catch(IOException ex)
+		{
 			System.out.println(ex);
 			System.exit(1);
-		} catch(FontFormatException ex){
+		}
+		catch(FontFormatException ex)
+		{
 			System.out.println(ex);
 			System.exit(1);
 		}
@@ -297,17 +301,17 @@ class GamePanel extends JPanel implements KeyListener{
 			if(!g.getKilled())
 			{
 				if(g.getLeft() == true)
-			{
-				if(g.getX() >= g.getMin())
 				{
-					g.addX(-1);
+					if(g.getX() >= g.getMin())
+					{
+						g.addX(-1);
+					}
+					else
+					{
+						g.setLeft(false);
+						g.setRight(true);
+					}
 				}
-				else
-				{
-					g.setLeft(false);
-					g.setRight(true);
-				}
-			}
 				if(g.getRight() == true)
 				{
 					if(g.getX() <= g.getMax())
@@ -321,7 +325,6 @@ class GamePanel extends JPanel implements KeyListener{
 					}
 				}
 			}
-			
 		}
     }
     
@@ -414,8 +417,8 @@ class GamePanel extends JPanel implements KeyListener{
 			r = rand.nextInt(6);
 			if(r == 1)
 			{
-				x = rand.nextInt(p.getSizeX() - 30);
-				goombas.add(new goomba(p.	getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,true,false,false));
+				x = rand.nextInt(p.getSizeX() - 40);
+				goombas.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
 			}
 		}
 		
@@ -434,7 +437,7 @@ class GamePanel extends JPanel implements KeyListener{
     		}
       		if(sameSpot == false)
     		{
-				goombas.add(new goomba(x,555-30,30,30,x,x+500,true,false,false));
+				goombas.add(new goomba(x,555-40,40,40,x,x+500,true,false,false));
     		}
     		else
     		{
@@ -614,7 +617,7 @@ class GamePanel extends JPanel implements KeyListener{
 		g.drawImage(lifePic, 5, 7, null); 
 		g.drawImage(coinPic, 10, 40, null);
 		g.setFont(marioFont);
-		g.drawString("X"+Integer.toString(lives), 37, 35);
+		g.drawString("x"+Integer.toString(lives), 37, 35);
 		g.drawString(Integer.toString(collectedCoins), 33, 69);
 	}
 }	
