@@ -36,7 +36,6 @@ public class MarioRun extends JFrame implements ActionListener
 
 	public void actionPerformed(ActionEvent evt)
 	{
-		game.userActions();
 		game.update();
 		game.repaint();
 	}
@@ -50,6 +49,7 @@ public class MarioRun extends JFrame implements ActionListener
 class GamePanel extends JPanel implements KeyListener{
 	private boolean []keys;
 	private MarioRun mainFrame;
+	private String screen = "menu";
 	
 	private Image back, tmp, currPic, coinPic, lifePic;
 	
@@ -142,23 +142,34 @@ class GamePanel extends JPanel implements KeyListener{
         mainFrame.start();
     }
     
-    public void userActions()
-    {
-    	move();
-    	jump();
-    	jumpCooldown();
-    	invincibilityCooldown();
-    }
-    
     public void update()
     {
-    	checkCollectedCoins();
-    	checkPlatformCollide();
-    	checkCoinCollide();
-    	checkGoombaCollide();
-    	moveGoombas();
-    	System.out.println(mario.getJump());
+    	if(screen == "menu")
+    	{
+    		menuStart();
+    	}
+    	if(screen == "game")
+    	{
+	    	move();
+	    	jump();
+	    	jumpCooldown();
+	    	invincibilityCooldown();
+	    	checkCollectedCoins();
+	    	checkPlatformCollide();
+	    	checkCoinCollide();
+	    	checkGoombaCollide();
+	    	moveGoombas();
+	    	System.out.println(mario.getJump());
+    	}
     }
+    
+	public void menuStart()
+	{
+		if(keys[KeyEvent.VK_SPACE] )
+		{
+			screen = "game";
+		}
+	}
     
     public void checkCollectedCoins()
     {
@@ -528,97 +539,105 @@ class GamePanel extends JPanel implements KeyListener{
 
     public void paintComponent(Graphics g)
     { 	
-    	Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
-    	g.drawImage(back,backX,0,null);
-    	g.drawRect(marioRect.x, marioRect.y, marioRect.width, marioRect.height);
-		for(platform p : platforms)
-		{
-			Color platBottomColor = new Color(213,132,22);
-			g.setColor(platBottomColor);  
-			g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),545 - p.getY());
-		}
-		for(platform p : platforms)
-		{
-			Color platTopColor = new Color(67,144,0);
-			g.setColor(platTopColor);  
-			g.fillRect(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
-		}
-		for(coin c : coins)
-		{
-			if(c.getCollected() == false)
+    	if(screen == "menu")
+    	{
+    		g.setColor(Color.red);
+	    	g.fillRect(0,0,getWidth(),getHeight()); //background
+    	}
+    	if(screen == "game")
+    	{
+	    	Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
+	    	g.drawImage(back,backX,0,null);
+	    	g.drawRect(marioRect.x, marioRect.y, marioRect.width, marioRect.height);
+			for(platform p : platforms)
 			{
-				g.setColor(Color.yellow);  
-				g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
+				Color platBottomColor = new Color(213,132,22);
+				g.setColor(platBottomColor);  
+				g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),545 - p.getY());
 			}
-		}
-		for(goomba gb : goombas)
-		{
-			if(gb.getKilled() == false)
+			for(platform p : platforms)
 			{
-				if(gb.getRight())
+				Color platTopColor = new Color(67,144,0);
+				g.setColor(platTopColor);  
+				g.fillRect(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
+			}
+			for(coin c : coins)
+			{
+				if(c.getCollected() == false)
 				{
-					g.drawImage(gb.getRightImage(),gb.getX(),gb.getY(),null);
+					g.setColor(Color.yellow);  
+					g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
 				}
-				if(gb.getLeft())
+			}
+			for(goomba gb : goombas)
+			{
+				if(gb.getKilled() == false)
 				{
-					g.drawImage(gb.getLeftImage(),gb.getX(),gb.getY(),null);
+					if(gb.getRight())
+					{
+						g.drawImage(gb.getRightImage(),gb.getX(),gb.getY(),null);
+					}
+					if(gb.getLeft())
+					{
+						g.drawImage(gb.getLeftImage(),gb.getX(),gb.getY(),null);
+					}
 				}
+				
+				gb.addFrames(1);
+				if(gb.getFrames()==30){
+					gb.addFrames(-gb.getFrames()); // reset frames
+				}
+				
+				if(gb.getKilled())
+				{
+					if(gb.getLeft())
+					{ 
+						if(gb.getKillTimer()<=10) // dead goomba appears for a bit
+						{
+							g.drawImage(gb.getDeadImage(0),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
+							gb.setKillTimer(gb.getKillTimer()+1);
+						}
+	
+					}
+					if(gb.getRight())
+					{ 
+						if(gb.getKillTimer()<=10)
+						{
+							g.drawImage(gb.getDeadImage(1),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
+							gb.setKillTimer(gb.getKillTimer()+1);
+						}
+	
+					}
+				}	
 			}
 			
-			gb.addFrames(1);
-			if(gb.getFrames()==30){
-				gb.addFrames(-gb.getFrames()); // reset frames
+			if(!right && !left)
+			{
+	        	g.drawImage(currPic, mario.getX(), mario.getY(), null);
+	        }
+			if(right)
+			{
+	        	currPic = marioRightWalkPics.get(0);
+	            g.drawImage(marioRightWalkPics.get(frames),mario.getX(),mario.getY(),null);
+	        }
+	        if(left)
+	        {
+	        	currPic = marioLeftWalkPics.get(0);
+	            g.drawImage(marioLeftWalkPics.get(frames),mario.getX(),mario.getY(),null);
+	        }
+			frames++;
+			if(frames==20)
+			{
+				frames=0;	
 			}
 			
-			if(gb.getKilled())
-			{
-				if(gb.getLeft())
-				{ 
-					if(gb.getKillTimer()<=10) // dead goomba appears for a bit
-					{
-						g.drawImage(gb.getDeadImage(0),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
-						gb.setKillTimer(gb.getKillTimer()+1);
-					}
-
-				}
-				if(gb.getRight())
-				{ 
-					if(gb.getKillTimer()<=10)
-					{
-						g.drawImage(gb.getDeadImage(1),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
-						gb.setKillTimer(gb.getKillTimer()+1);
-					}
-
-				}
-			}	
-		}
-		
-		if(!right && !left)
-		{
-        	g.drawImage(currPic, mario.getX(), mario.getY(), null);
-        }
-		if(right)
-		{
-        	currPic = marioRightWalkPics.get(0);
-            g.drawImage(marioRightWalkPics.get(frames),mario.getX(),mario.getY(),null);
-        }
-        if(left)
-        {
-        	currPic = marioLeftWalkPics.get(0);
-            g.drawImage(marioLeftWalkPics.get(frames),mario.getX(),mario.getY(),null);
-        }
-		frames++;
-		if(frames==20)
-		{
-			frames=0;	
-		}
-		
-		g.setColor(Color.white);
-		g.drawImage(lifePic, 5, 7, null); 
-		g.drawImage(coinPic, 10, 40, null);
-		g.setFont(marioFont);
-		g.drawString("x"+Integer.toString(lives), 37, 35);
-		g.drawString(Integer.toString(collectedCoins), 33, 69);
+			g.setColor(Color.white);
+			g.drawImage(lifePic, 5, 7, null); 
+			g.drawImage(coinPic, 10, 40, null);
+			g.setFont(marioFont);
+			g.drawString("x"+Integer.toString(lives), 37, 35);
+			g.drawString(Integer.toString(collectedCoins), 33, 69);
+    	}
 	}
 }	
 
