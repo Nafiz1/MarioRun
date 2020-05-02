@@ -42,24 +42,23 @@ public class MarioRun extends JFrame implements ActionListener
 
     public static void main(String[] arguments)
     {
-		MarioRun frame = new MarioRun();
+		MarioRun frame = new MarioRun();		
     }
 }
 
-class GamePanel extends JPanel implements KeyListener
-{
+class GamePanel extends JPanel implements KeyListener{
 	private boolean []keys;
 	private MarioRun mainFrame;
-	private String screen = "menu";
+	private String screen = "game";
 	
-	private Image back, tmp, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic;
+	private Image back, tmp, currPic, coinPic, lifePic, brickPic, questionPic;
 	
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
 	
 	private int backX = 0;
 	
-	private int ground = 555-70;
+	private int ground = 555-50;
 	
 	private int collectedCoins = 0;
 	
@@ -68,7 +67,7 @@ class GamePanel extends JPanel implements KeyListener
 	
 	private ArrayList<platform>platforms = new ArrayList<platform>();
 	private ArrayList<coin>coins = new ArrayList<coin>();
-	private ArrayList<mushroom>mushrooms = new ArrayList<mushroom>();
+	private ArrayList<ArrayList<brick>>bricks = new ArrayList<ArrayList<brick>>();
 	
 	private ArrayList<goomba> goombas = new ArrayList<goomba>();
 	
@@ -87,17 +86,19 @@ class GamePanel extends JPanel implements KeyListener
 	private boolean right, left;
 	
 	private Font marioFont;
+	
+	private boolean collide, collideL, collideR, collideT;
 		
-	player mario = new player(430,ground,0,false,false,70,45);
+	player mario = new player(430,ground,0,false,false,50,25);
 	
 	public GamePanel(MarioRun m)
 	{
 		keys = new boolean[KeyEvent.KEY_LAST+1];
 		back = new ImageIcon("MarioBackground.png").getImage().getScaledInstance(10000,650,Image.SCALE_SMOOTH);
-		coinPic = new ImageIcon("Mariopics/coin.gif").getImage().getScaledInstance(15,25,Image.SCALE_SMOOTH);
-		mushroomPic = new ImageIcon("Mariopics/mushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
-		coinIconPic = new ImageIcon("Mariopics/coinIcon.png").getImage().getScaledInstance(20,30,Image.SCALE_SMOOTH);
-		lifeIconPic = new ImageIcon("Mariopics/lifeMushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
+		coinPic = new ImageIcon("Mariopics/coin.png").getImage().getScaledInstance(20,30,Image.SCALE_SMOOTH);
+		lifePic = new ImageIcon("Mariopics/lifeMushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
+		brickPic = new ImageIcon("Mariopics/mariobrick.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
+		questionPic = new ImageIcon("Mariopics/questionblock.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
         for(int i=0; i<8; i++)
         {
         	tmp = new ImageIcon("MarioPics/mariowalk" +Integer.toString(i)+".png").getImage().getScaledInstance(mario.getWidth()+5,mario.getHeight()+5,Image.SCALE_SMOOTH);
@@ -137,7 +138,7 @@ class GamePanel extends JPanel implements KeyListener
         loadPlatforms();
         loadCoins();
     	loadGoombas();
-    	loadMushrooms();
+    	loadBricks();
 	}
 	
     public void addNotify()
@@ -153,21 +154,19 @@ class GamePanel extends JPanel implements KeyListener
     	{
     		menuStart();
     	}
-    	if(screen == "level1")
+    	if(screen == "game")
     	{
 	    	move();
 	    	jump();
 	    	jumpCooldown();
 	    	invincibilityCooldown();
-	    	checkDeath();
 	    	checkCollectedCoins();
 	    	checkPlatformCollide();
 	    	checkCoinCollide();
 	    	checkGoombaCollide();
-	    	checkMushroomCollide();
 	    	moveGoombas();
-	    	moveMushrooms();
-	    	System.out.println(mario.getJump());
+	    	checkBrickCollide();
+	    	//System.out.println(mario.getJump());
     	}
     }
     
@@ -175,17 +174,9 @@ class GamePanel extends JPanel implements KeyListener
 	{
 		if(keys[KeyEvent.VK_SPACE] )
 		{
-			screen = "level1";
+			screen = "game";
 		}
 	}
-	
-    public void checkDeath()
-    {
-    	if(lives == 0)
-    	{
-    		System.exit(0);
-    	}
-    }
     
     public void checkCollectedCoins()
     {
@@ -232,11 +223,12 @@ class GamePanel extends JPanel implements KeyListener
 			g.addMin(-4);
 			g.addMax(-4);
 		}
-		for(mushroom m : mushrooms)
+		for(ArrayList<brick> b2 : bricks)
 		{
-			m.addX(-4);
-			m.addMin(-4);
-			m.addMax(-4);
+			for(brick b: b2)
+			{
+				b.addX(-4);
+			}
 		}
     }
     public void moveBackRight()
@@ -256,40 +248,52 @@ class GamePanel extends JPanel implements KeyListener
 			g.addMin(+4);
 			g.addMax(+4);
 		}
-		for(mushroom m : mushrooms)
+		for(ArrayList<brick> b2 : bricks)
 		{
-			m.addX(+4);
-			m.addMin(+4);
-			m.addMax(+4);
+			for(brick b: b2)
+			{
+				b.addX(4);
+			}
 		}
     }
 	
 	public void move()
 	{
-		if(keys[KeyEvent.VK_RIGHT] )
-		{
-			right = true;
-			left = false;
-			if(shiftRight == false)
+		
+			if(keys[KeyEvent.VK_RIGHT])
 			{
-				mario.addX(-10);
+				right = true;
+				left = false;
+				if(shiftRight == false)
+				{
+					if(!collideL)
+					{
+						mario.addX(-10);
+					}
+					
+				}
+				shiftRight = true;
+				shiftLeft = false;
+				moveBackLeft();
 			}
-			shiftRight = true;
-			shiftLeft = false;
-			moveBackLeft();
-		}
-		if(keys[KeyEvent.VK_LEFT] && backX <= 0)
-		{
-			right = false;
-			left = true;
-			if(shiftLeft == false)
+		
+		
+			if(keys[KeyEvent.VK_LEFT] && backX <= 0)
 			{
-				mario.addX(10);
-			}
-			shiftRight = false;
-			shiftLeft = true;
-			moveBackRight();
-		}
+				right = false;
+				left = true;	
+				if(shiftLeft == false)
+				{
+					if(!collideR)
+					{
+						mario.addX(10);
+					}
+					
+				}
+				shiftRight = false;
+				shiftLeft = true;
+				moveBackRight();
+			}	
 		
 		Point mouse = MouseInfo.getPointerInfo().getLocation();
 		Point offset = getLocationOnScreen();
@@ -367,40 +371,6 @@ class GamePanel extends JPanel implements KeyListener
 		}
     }
     
-    public void moveMushrooms()
-    {
-		for(mushroom m : mushrooms)
-		{
-			if(!m.getCollected())
-			{
-				if(m.getLeft() == true)
-				{
-					if(m.getX() >= m.getMin())
-					{
-						m.addX(-2);
-					}
-					else
-					{
-						m.setLeft(false);
-						m.setRight(true);
-					}
-				}
-				if(m.getRight() == true)
-				{
-					if(m.getX() <= m.getMax())
-					{
-						m.addX(+2);
-					}
-					else
-					{
-						m.setLeft(true);
-						m.setRight(false);
-					}
-				}
-			}
-		}
-    }
-    
     public void loadPlatforms()
     {
 		int plx;
@@ -408,11 +378,11 @@ class GamePanel extends JPanel implements KeyListener
 		int size;
     	boolean sameSpot = false;
     	Random rand = new Random();
-    	for(int i=0;i<70;i++)
+    	for(int i=0;i<40;i++)
     	{
     		plx = rand.nextInt(9000) + 500;
-    		ply = rand.nextInt(450) + 10;
-    		size = rand.nextInt(220) + 70;
+    		ply = rand.nextInt(250) + 150;
+    		size = rand.nextInt(320) + 150;
     		for(platform p : platforms)
     		{
     			Rectangle newRect = new Rectangle(plx,ply,size,10);
@@ -424,7 +394,7 @@ class GamePanel extends JPanel implements KeyListener
     		}
     		if(sameSpot == false)
     		{
-    			platforms.add(new platform(plx,ply,size,10,false));
+    			platforms.add(new platform(plx,ply,size,10));
     		}
     		else
     		{
@@ -447,8 +417,8 @@ class GamePanel extends JPanel implements KeyListener
 			r = rand.nextInt(4);
 			if(r == 1) // 1 in 4 chance
 			{
-				x = rand.nextInt(p.getSizeX() - 15);
-				coins.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
+				x = rand.nextInt(p.getSizeX() - 10);
+				coins.add(new coin(p.getX() + x,p.getY() - 25,10,20,1,false));
 			}
 		}
 		
@@ -459,7 +429,7 @@ class GamePanel extends JPanel implements KeyListener
 			x = rand.nextInt(9000) + 500;
     		for(coin c : coins)
     		{
-    			Rectangle newRect = new Rectangle(x,555-30,15,25);
+    			Rectangle newRect = new Rectangle(x,555-25,10,20);
     			Rectangle oldRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
     			if(newRect.intersects(oldRect))
     			{
@@ -468,7 +438,7 @@ class GamePanel extends JPanel implements KeyListener
     		}
       		if(sameSpot == false)
     		{
-    			coins.add(new coin(x,555-30,15,25,1,false));
+    			coins.add(new coin(x,555-25,10,20,1,false));
     		}
     		else
     		{
@@ -487,15 +457,11 @@ class GamePanel extends JPanel implements KeyListener
     	
 		for(platform p : platforms)
 		{
-			if(p.getSomethingOn() == false)
+			r = rand.nextInt(6);
+			if(r == 1)
 			{
-				r = rand.nextInt(6);
-				if(r == 1)
-				{
-					x = rand.nextInt(p.getSizeX() - 40);
-					goombas.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
-					p.setSomethingOn(true);
-				}	
+				x = rand.nextInt(p.getSizeX() - 40);
+				goombas.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
 			}
 		}
 		
@@ -523,42 +489,118 @@ class GamePanel extends JPanel implements KeyListener
 		}
     }
     
-    public void loadMushrooms()
+    public void loadBricks()
     {
-    	int r;
-    	int x;
-    	int rground;
+    	int x=0;
+    	int y=0;
     	boolean sameSpot = false;
     	Random rand = new Random();
     	
-		for(platform p : platforms)
-		{
-			if(p.getSomethingOn() == false)
-			{
-				r = rand.nextInt(12);
-				if(r == 1)
-				{
-					x = rand.nextInt(p.getSizeX() - 30);
-					mushrooms.add(new mushroom(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,false,false,true));
-					p.setSomethingOn(true);
-				}	
-			}
-		}
+    	for(int i=0; i<40; i++)
+    	{
+    		x = rand.nextInt(9000) + 500;
+    		y = 430;
+    		for(ArrayList<brick> b2: bricks)
+    		{
+    			for(brick b: b2)
+    			{
+    				Rectangle newRect = new Rectangle(x,y,40,40);
+	    			Rectangle oldRect = new Rectangle(b.getX(), b.getY(), 40, 40);
+	    			Rectangle oldRectLeft = new Rectangle(b.getX()-40, b.getY(), 40, 40);
+	    			Rectangle oldRectRight = new Rectangle(b.getX()+40, b.getY(), 40, 40);
+	    			Rectangle oldRectLeft2 = new Rectangle(b.getX()-80, b.getY(), 40, 40);
+	    			Rectangle oldRectRight2 = new Rectangle(b.getX()+80, b.getY(), 40, 40);
+	    			Rectangle oldRectLeft3 = new Rectangle(b.getX()-120, b.getY(), 40, 40);
+	    			Rectangle oldRectRight3 = new Rectangle(b.getX()+120, b.getY(), 40, 40);
+	    			
+	    			if(newRect.intersects(oldRect) || newRect.intersects(oldRectLeft) || newRect.intersects(oldRectRight) || newRect.intersects(oldRectLeft2) || newRect.intersects(oldRectRight2))
+	    			{
+	    				sameSpot = true;
+    				}
+    			}    			
+    		}
+    		if(!sameSpot)
+    		{	int randInt = rand.nextInt(4) + 2;
+    			ArrayList<brick> tmp = new ArrayList<brick>();
+    			for(int z=0; z<randInt; z++)
+    			{
+    				tmp.add(new brick(x+z*40, y, 40, 40));
+    			}
+    			bricks.add(tmp);
+    		}
+    		else
+    		{	
+    			sameSpot = false;
+    		}
+    	}
     }
-	
+    
+    public void checkBrickCollide()
+    {
+    	for(ArrayList<brick> b2: bricks)
+    	{
+    		for(brick b: b2)
+    		{
+    			Rectangle bLeft = new Rectangle(b2.get(0).getX(), b2.get(0).getY(),1,40); //left side of the brick segment
+    			Rectangle bRight = new Rectangle(b2.get(b2.size()-1).getX()+40, b2.get(b2.size()-1).getY(),1,40); //right side of the brick segment
+    			
+    			Rectangle brickBot = new Rectangle(b.getX()+1,b.getY()+40,38,1);
+		    	Rectangle brickLeft = new Rectangle(b.getX(),b.getY(),1,39);
+		    	Rectangle brickRight = new Rectangle(b.getX()+40,b.getY(),1,39);
+		    	Rectangle brickTop = new Rectangle(b.getX(),b.getY()-2,40, 1);
+		    	
+		    	Rectangle marioBot = new Rectangle(mario.getX(),mario.getY()+mario.getHeight(),mario.getWidth(),10);
+		    	Rectangle marioLeft = new Rectangle(mario.getX(),mario.getY(),10,mario.getHeight());
+		    	Rectangle marioRight = new Rectangle(mario.getX()+mario.getWidth()-10,mario.getY(),10,mario.getHeight());
+		    	Rectangle marioTop = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),10);
+		    	
+		    	Rectangle guy = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+		    	if(brickLeft.intersects(guy)){
+		        	collideL = true;
+		        	mario.setVY(5);	
+		        }
+		        if(brickRight.intersects(guy)){
+		        	collideR = true;
+		        	mario.setVY(5);
+		        }
+		    	if(brickBot.intersects(guy)){
+		        	mario.setVY(5);
+		        	//collide = true;
+		        }
+		        if(brickTop.intersects(guy)){
+		        	//collideT = true;
+		        	mario.setY(b.getY()-50);
+		        	mario.setVY(0);
+		        	mario.setJump(false);
+		        }
+		        if(collideR)
+		        {
+		        	 System.out.println(collideR);
+		        }
+		       
+		        if(mario.getY() >= b.getY()-50)
+		        {
+		        	collide = false;
+		        	collideL = false;
+		        	collideR = false;
+		        }
+    		}
+    	}  	
+    }
+    
     public void checkPlatformCollide()
     {
     	boolean onPlatform = false;
     	for(platform p : platforms)
     	{
-			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+40,mario.getWidth()+10,mario.getHeight()-40); //player has 10 pixel clearance for x position
+			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+25,mario.getWidth()+10,mario.getHeight()-25); //player has 10 pixel clearance for x position
 			Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
 			if(mario.getVY() >= 0 && mario.getJump() == true)
 			{
 	    		if(m.intersects(plat))
 	    		{
 	    			onPlatform = true;
-					mario.setY(p.getY()-70);
+					mario.setY(p.getY()-50);
 					mario.setVY(0);
 					mario.setJump(false);
 					jCooldown = true;
@@ -611,23 +653,6 @@ class GamePanel extends JPanel implements KeyListener
     		}
     	}
     }
-    
-    public void checkMushroomCollide()
-    {
-    	for(mushroom mu : mushrooms)
-    	{
-			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-			Rectangle goombaRect = new Rectangle(mu.getX(),mu.getY(),mu.getSizeX(),mu.getSizeY());
-    		if(m.intersects(goombaRect))
-    		{
-    			if(mu.getCollected()==false)
-    			{
-    				lives += 1;
-    				mu.setCollected(true);
-    			}
-    		}
-    	}
-    }
 	
     public void keyTyped(KeyEvent e) {}
 
@@ -650,11 +675,11 @@ class GamePanel extends JPanel implements KeyListener
     		g.setColor(Color.red);
 	    	g.fillRect(0,0,getWidth(),getHeight()); //background
     	}
-    	if(screen == "level1")
+    	if(screen == "game")
     	{
 	    	Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
 	    	g.drawImage(back,backX,0,null);
-	    	g.drawRect(marioRect.x, marioRect.y, marioRect.width, marioRect.height);
+	    	//g.drawRect(marioRect.x, marioRect.y, marioRect.width, marioRect.height);
 			for(platform p : platforms)
 			{
 				Color platBottomColor = new Color(213,132,22);
@@ -671,9 +696,62 @@ class GamePanel extends JPanel implements KeyListener
 			{
 				if(c.getCollected() == false)
 				{
-					g.drawImage(coinPic, c.getX(), c.getY(), null);
+					g.setColor(Color.yellow);  
+					g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
 				}
 			}
+			for(ArrayList<brick> b2: bricks)
+			{
+				//System.out.println(b2.size());
+				for(int i=0; i<b2.size(); i++)
+				{
+					Rectangle m = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),10);
+					//g.drawRect(m.x,m.y,m.width,m.height);
+					Rectangle brickBot = new Rectangle(b2.get(i).getX()+2,b2.get(i).getY()+40,36,1);
+					//g.drawRect(brickBot.x,brickBot.y,brickBot.width,brickBot.height);
+					if(m.intersects(brickBot))
+					{
+						g.drawImage(brickPic,b2.get(i).getX(),b2.get(i).getY()-15,null);
+						if(i==1 && b2.size()==3)
+						{
+							g.drawImage(questionPic,b2.get(1).getX(),b2.get(1).getY()-15,null);
+							
+						}
+						if(i==5 && b2.size()==5)
+						{
+							g.drawImage(questionPic,b2.get(2).getX(),b2.get(2).getY()-15,null);
+						}
+					}	
+					else
+					{
+						g.drawImage(brickPic,b2.get(i).getX(),b2.get(i).getY(),null);
+						if(i==1 && b2.size()==3)
+						{
+							g.drawImage(questionPic,b2.get(1).getX(),b2.get(1).getY(),null);
+						}
+						if(i==3 && b2.size()==5)
+						{
+							g.drawImage(questionPic,b2.get(2).getX(),b2.get(2).getY(),null);
+						}
+					}
+					
+					/*Rectangle brick = new Rectangle(b.getX(),b.getY()+40,40,1);
+			    	Rectangle brickLeft = new Rectangle(b.getX(),b.getY(),1,39);
+			    	Rectangle brickRight = new Rectangle(b.getX()+40,b.getY(),1,39);
+			    	Rectangle brickTop = new Rectangle(b.getX(),b.getY(),40, 1);
+					g.drawRect(brick.x, brick.y, brick.width, brick.height);
+					g.drawRect(brickLeft.x, brickLeft.y, brickLeft.width, brickLeft.height);
+					g.drawRect(brickRight.x, brickRight.y, brickRight.width, brickRight.height);
+					g.drawRect(brickTop.x, brickTop.y, brickTop.width, brickTop.height);*/
+					
+    			Rectangle bLeft = new Rectangle(b2.get(0).getX(), b2.get(0).getY(),1,40); //left side of the brick segment
+    			Rectangle bRight = new Rectangle(b2.get(b2.size()-1).getX()+40, b2.get(b2.size()-1).getY(),1,40); 
+		    			
+		    		//g.drawRect(bLeft.x,bLeft.y,bLeft.width,bLeft.height);
+		    		//g.drawRect(bRight.x,bRight.y,bRight.width,bRight.height);
+				}
+			}
+			
 			for(goomba gb : goombas)
 			{
 				if(gb.getKilled() == false)
@@ -689,8 +767,7 @@ class GamePanel extends JPanel implements KeyListener
 				}
 				
 				gb.addFrames(1);
-				if(gb.getFrames()==30)
-				{
+				if(gb.getFrames()==30){
 					gb.addFrames(-gb.getFrames()); // reset frames
 				}
 				
@@ -716,14 +793,6 @@ class GamePanel extends JPanel implements KeyListener
 					}
 				}	
 			}
-	
-			for(mushroom m : mushrooms)
-			{
-				if(m.getCollected() == false)
-				{
-					g.drawImage(mushroomPic, m.getX(), m.getY(), null);
-				}
-			}
 			
 			if(!right && !left)
 			{
@@ -746,11 +815,26 @@ class GamePanel extends JPanel implements KeyListener
 			}
 			
 			g.setColor(Color.white);
-			g.drawImage(lifeIconPic, 5, 7, null); 
-			g.drawImage(coinIconPic, 10, 40, null);
+			g.drawImage(lifePic, 5, 7, null); 
+			g.drawImage(coinPic, 10, 40, null);
 			g.setFont(marioFont);
 			g.drawString("x"+Integer.toString(lives), 37, 35);
 			g.drawString(Integer.toString(collectedCoins), 33, 69);
+			
+			Rectangle marioBot = new Rectangle(mario.getX(),mario.getY()+mario.getHeight()-5,mario.getWidth(),10);
+		    	Rectangle marioLeft = new Rectangle(mario.getX(),mario.getY(),10,mario.getHeight());
+		    	Rectangle marioRight = new Rectangle(mario.getX()+mario.getWidth()-10,mario.getY(),10,mario.getHeight());
+		    	Rectangle marioTop = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),10);
+		    	
+		    //g.drawRect(marioBot.x,marioBot.y,marioBot.width,marioBot.height);
+		    //drawRect(marioLeft.x,marioLeft.y,marioLeft.width,marioLeft.height);
+		    //drawRect(marioRight.x,marioRight.y,marioRight.width,marioRight.height);
+		    //g.drawRect(marioTop.x,marioTop.y,marioTop.width,marioTop.height);
+		    
+		    
+		    Rectangle guy = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+		    g.drawRect(guy.x,guy.y,guy.width,guy.height);
+		    
     	}
 	}
 }	
@@ -763,6 +847,7 @@ class player
 	private boolean jump;
 	private int height;
 	private int width;
+	private ArrayList<Image>marioEvolvePics = new ArrayList<Image>();
 	
 	public player(int px, int py, int pvy, boolean j, boolean f, int h, int w)
 	{
@@ -835,15 +920,13 @@ class platform
 	private int Y;
 	private int sizeX;
 	private int sizeY;
-	private boolean somethingOn;
 	
-	public platform(int plx, int ply, int sx, int sy, boolean on)
+	public platform(int plx, int ply, int sx, int sy)
 	{
 		X = plx;
 		Y = ply;
 		sizeX = sx;
 		sizeY = sy;
-		somethingOn = on;
 	}
 	
 	public int getX()
@@ -868,16 +951,6 @@ class platform
 	public int getSizeY()
 	{
 	    return sizeY;
-	}
-	
-	public boolean getSomethingOn()
-	{
-	    return somethingOn;
-	}
-	
-	public void setSomethingOn(boolean b)
-	{
-	    somethingOn = b;
 	}
 }
 
@@ -1099,102 +1172,33 @@ class goomba
 	    killed = b;
 	}
 }
-
-class mushroom
-{
-	private int X;
-	private int Y;
-	private int vx;
+class brick{
+	private int x;
+	private int y;
 	private int sizeX;
 	private int sizeY;
-	private int minMove;
-	private int maxMove;
-	private boolean collected;
-	private boolean left;
-	private boolean right;
-	
-	public mushroom(int gx, int gy, int sx, int sy, int mi, int ma, boolean c, boolean l, boolean r)
+	private ArrayList<Image>marioShroomPics = new ArrayList<Image>(); 
+
+	public brick(int x1, int y1, int sizeX1, int sizeY1)
 	{
-		X = gx;
-		Y = gy;
-		sizeX = sx;
-		sizeY = sy;
-		minMove = mi;
-		maxMove = ma;
-		collected = c;
-		left = l;
-		right = r;
+		x = x1;
+		y = y1;
+		sizeX = sizeX1;
+		sizeY = sizeY1;
 	}
 	
 	public int getX()
 	{
-	    return X;
-	}
-	public void addX(int num)
-	{
-		X += num;
+		return x;
 	}
 	
 	public int getY()
 	{
-	    return Y;
+		return y;
 	}
 	
-	public int getSizeX()
+	public void addX(int n)
 	{
-	    return sizeX;
-	}
-	
-	public int getSizeY()
-	{
-	    return sizeY;
-	}
-	
-	public int getMin()
-	{
-	    return minMove;
-	}
-	
-	public int getMax()
-	{
-	    return maxMove;
-	}
-	
-	public void addMin(int num)
-	{
-		minMove += num;
-	}
-	public void addMax(int num)
-	{
-		maxMove += num;
-	}
-
-	public boolean getCollected()
-	{
-	    return collected;
-	}
-	public void setCollected(boolean b)
-	{
-	    collected = b;
-	}
-
-	public boolean getLeft()
-	{
-	    return left;
-	}
-	
-	public boolean getRight()
-	{
-	    return right;
-	}
-	
-	public void setLeft(boolean b)
-	{
-	    left = b;
-	}
-	
-	public void setRight(boolean b)
-	{
-	    right = b;
+		x += n;
 	}
 }
