@@ -46,12 +46,13 @@ public class MarioRun extends JFrame implements ActionListener
     }
 }
 
-class GamePanel extends JPanel implements KeyListener{
+class GamePanel extends JPanel implements KeyListener
+{
 	private boolean []keys;
 	private MarioRun mainFrame;
 	private String screen = "menu";
 	
-	private Image back, tmp, currPic, coinIconPic, lifeIconPic, coinPic;
+	private Image back, tmp, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic;
 	
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
@@ -67,6 +68,7 @@ class GamePanel extends JPanel implements KeyListener{
 	
 	private ArrayList<platform>platforms = new ArrayList<platform>();
 	private ArrayList<coin>coins = new ArrayList<coin>();
+	private ArrayList<mushroom>mushrooms = new ArrayList<mushroom>();
 	
 	private ArrayList<goomba> goombas = new ArrayList<goomba>();
 	
@@ -93,6 +95,7 @@ class GamePanel extends JPanel implements KeyListener{
 		keys = new boolean[KeyEvent.KEY_LAST+1];
 		back = new ImageIcon("MarioBackground.png").getImage().getScaledInstance(10000,650,Image.SCALE_SMOOTH);
 		coinPic = new ImageIcon("Mariopics/coin.gif").getImage().getScaledInstance(15,25,Image.SCALE_SMOOTH);
+		mushroomPic = new ImageIcon("Mariopics/mushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
 		coinIconPic = new ImageIcon("Mariopics/coinIcon.png").getImage().getScaledInstance(20,30,Image.SCALE_SMOOTH);
 		lifeIconPic = new ImageIcon("Mariopics/lifeMushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
         for(int i=0; i<8; i++)
@@ -134,6 +137,7 @@ class GamePanel extends JPanel implements KeyListener{
         loadPlatforms();
         loadCoins();
     	loadGoombas();
+    	loadMushrooms();
 	}
 	
     public void addNotify()
@@ -160,7 +164,9 @@ class GamePanel extends JPanel implements KeyListener{
 	    	checkPlatformCollide();
 	    	checkCoinCollide();
 	    	checkGoombaCollide();
+	    	checkMushroomCollide();
 	    	moveGoombas();
+	    	moveMushrooms();
 	    	System.out.println(mario.getJump());
     	}
     }
@@ -226,6 +232,12 @@ class GamePanel extends JPanel implements KeyListener{
 			g.addMin(-4);
 			g.addMax(-4);
 		}
+		for(mushroom m : mushrooms)
+		{
+			m.addX(-4);
+			m.addMin(-4);
+			m.addMax(-4);
+		}
     }
     public void moveBackRight()
     {
@@ -243,6 +255,12 @@ class GamePanel extends JPanel implements KeyListener{
 			g.addX(+4);
 			g.addMin(+4);
 			g.addMax(+4);
+		}
+		for(mushroom m : mushrooms)
+		{
+			m.addX(+4);
+			m.addMin(+4);
+			m.addMax(+4);
 		}
     }
 	
@@ -349,6 +367,40 @@ class GamePanel extends JPanel implements KeyListener{
 		}
     }
     
+    public void moveMushrooms()
+    {
+		for(mushroom m : mushrooms)
+		{
+			if(!m.getCollected())
+			{
+				if(m.getLeft() == true)
+				{
+					if(m.getX() >= m.getMin())
+					{
+						m.addX(-2);
+					}
+					else
+					{
+						m.setLeft(false);
+						m.setRight(true);
+					}
+				}
+				if(m.getRight() == true)
+				{
+					if(m.getX() <= m.getMax())
+					{
+						m.addX(+2);
+					}
+					else
+					{
+						m.setLeft(true);
+						m.setRight(false);
+					}
+				}
+			}
+		}
+    }
+    
     public void loadPlatforms()
     {
 		int plx;
@@ -372,7 +424,7 @@ class GamePanel extends JPanel implements KeyListener{
     		}
     		if(sameSpot == false)
     		{
-    			platforms.add(new platform(plx,ply,size,10));
+    			platforms.add(new platform(plx,ply,size,10,false));
     		}
     		else
     		{
@@ -435,11 +487,15 @@ class GamePanel extends JPanel implements KeyListener{
     	
 		for(platform p : platforms)
 		{
-			r = rand.nextInt(6);
-			if(r == 1)
+			if(p.getSomethingOn() == false)
 			{
-				x = rand.nextInt(p.getSizeX() - 40);
-				goombas.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
+				r = rand.nextInt(6);
+				if(r == 1)
+				{
+					x = rand.nextInt(p.getSizeX() - 40);
+					goombas.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
+					p.setSomethingOn(true);
+				}	
 			}
 		}
 		
@@ -467,6 +523,29 @@ class GamePanel extends JPanel implements KeyListener{
 		}
     }
     
+    public void loadMushrooms()
+    {
+    	int r;
+    	int x;
+    	int rground;
+    	boolean sameSpot = false;
+    	Random rand = new Random();
+    	
+		for(platform p : platforms)
+		{
+			if(p.getSomethingOn() == false)
+			{
+				r = rand.nextInt(12);
+				if(r == 1)
+				{
+					x = rand.nextInt(p.getSizeX() - 30);
+					mushrooms.add(new mushroom(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,false,false,true));
+					p.setSomethingOn(true);
+				}	
+			}
+		}
+    }
+	
     public void checkPlatformCollide()
     {
     	boolean onPlatform = false;
@@ -532,6 +611,23 @@ class GamePanel extends JPanel implements KeyListener{
     		}
     	}
     }
+    
+    public void checkMushroomCollide()
+    {
+    	for(mushroom mu : mushrooms)
+    	{
+			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+			Rectangle goombaRect = new Rectangle(mu.getX(),mu.getY(),mu.getSizeX(),mu.getSizeY());
+    		if(m.intersects(goombaRect))
+    		{
+    			if(mu.getCollected()==false)
+    			{
+    				lives += 1;
+    				mu.setCollected(true);
+    			}
+    		}
+    	}
+    }
 	
     public void keyTyped(KeyEvent e) {}
 
@@ -575,10 +671,6 @@ class GamePanel extends JPanel implements KeyListener{
 			{
 				if(c.getCollected() == false)
 				{
-					/*
-					g.setColor(Color.yellow);  
-					g.fillRect(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-					*/
 					g.drawImage(coinPic, c.getX(), c.getY(), null);
 				}
 			}
@@ -597,7 +689,8 @@ class GamePanel extends JPanel implements KeyListener{
 				}
 				
 				gb.addFrames(1);
-				if(gb.getFrames()==30){
+				if(gb.getFrames()==30)
+				{
 					gb.addFrames(-gb.getFrames()); // reset frames
 				}
 				
@@ -622,6 +715,14 @@ class GamePanel extends JPanel implements KeyListener{
 	
 					}
 				}	
+			}
+	
+			for(mushroom m : mushrooms)
+			{
+				if(m.getCollected() == false)
+				{
+					g.drawImage(mushroomPic, m.getX(), m.getY(), null);
+				}
 			}
 			
 			if(!right && !left)
@@ -734,13 +835,15 @@ class platform
 	private int Y;
 	private int sizeX;
 	private int sizeY;
+	private boolean somethingOn;
 	
-	public platform(int plx, int ply, int sx, int sy)
+	public platform(int plx, int ply, int sx, int sy, boolean on)
 	{
 		X = plx;
 		Y = ply;
 		sizeX = sx;
 		sizeY = sy;
+		somethingOn = on;
 	}
 	
 	public int getX()
@@ -765,6 +868,16 @@ class platform
 	public int getSizeY()
 	{
 	    return sizeY;
+	}
+	
+	public boolean getSomethingOn()
+	{
+	    return somethingOn;
+	}
+	
+	public void setSomethingOn(boolean b)
+	{
+	    somethingOn = b;
 	}
 }
 
@@ -984,5 +1097,104 @@ class goomba
 	public void setKilled(boolean b)
 	{
 	    killed = b;
+	}
+}
+
+class mushroom
+{
+	private int X;
+	private int Y;
+	private int vx;
+	private int sizeX;
+	private int sizeY;
+	private int minMove;
+	private int maxMove;
+	private boolean collected;
+	private boolean left;
+	private boolean right;
+	
+	public mushroom(int gx, int gy, int sx, int sy, int mi, int ma, boolean c, boolean l, boolean r)
+	{
+		X = gx;
+		Y = gy;
+		sizeX = sx;
+		sizeY = sy;
+		minMove = mi;
+		maxMove = ma;
+		collected = c;
+		left = l;
+		right = r;
+	}
+	
+	public int getX()
+	{
+	    return X;
+	}
+	public void addX(int num)
+	{
+		X += num;
+	}
+	
+	public int getY()
+	{
+	    return Y;
+	}
+	
+	public int getSizeX()
+	{
+	    return sizeX;
+	}
+	
+	public int getSizeY()
+	{
+	    return sizeY;
+	}
+	
+	public int getMin()
+	{
+	    return minMove;
+	}
+	
+	public int getMax()
+	{
+	    return maxMove;
+	}
+	
+	public void addMin(int num)
+	{
+		minMove += num;
+	}
+	public void addMax(int num)
+	{
+		maxMove += num;
+	}
+
+	public boolean getCollected()
+	{
+	    return collected;
+	}
+	public void setCollected(boolean b)
+	{
+	    collected = b;
+	}
+
+	public boolean getLeft()
+	{
+	    return left;
+	}
+	
+	public boolean getRight()
+	{
+	    return right;
+	}
+	
+	public void setLeft(boolean b)
+	{
+	    left = b;
+	}
+	
+	public void setRight(boolean b)
+	{
+	    right = b;
 	}
 }
