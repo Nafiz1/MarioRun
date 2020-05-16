@@ -48,7 +48,7 @@ public class MarioRun extends JFrame implements ActionListener
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "level2";
+	private String screen = "level1";
 	
 	private boolean []keys;
 	private MarioRun mainFrame;
@@ -58,18 +58,23 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private Rectangle intermissionNext;
 	private Rectangle storePrev;
 	private int totalCoins;
-	private Image back, menuback, intermissionback, storeback, tmp, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireballLPic, fireballRPic;
+	private Image back, menuback, intermissionback, storeback, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireballLPic, fireballRPic, brickPic, shroomPic, questionPic;
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
+	private ArrayList<Image>marioBigLeftWalkPics = new ArrayList<Image>();
+	private ArrayList<Image>marioBigRightWalkPics = new ArrayList<Image>();
 	private int backX = -20;
-	private int ground = 555-70;
+	private int ground = 555-50;
 	private int collectedCoins = 0;
 	private boolean shiftLeft = false;
 	private boolean shiftRight = false;
 	private ArrayList<platform>platforms = new ArrayList<platform>();
 	private ArrayList<coin>coins = new ArrayList<coin>();
-	private ArrayList<mushroom>mushrooms = new ArrayList<mushroom>();
+	private ArrayList<mushroom>mushrooms = new ArrayList<mushroom>(); //green mushrooms
 	private ArrayList<goomba> goombas = new ArrayList<goomba>();
+	private ArrayList<brick> currBrick = new ArrayList<brick>();
+	private ArrayList<ArrayList<brick>>bricks = new ArrayList<ArrayList<brick>>();
+	private ArrayList<marioShroom> marioMushrooms = new ArrayList<marioShroom>(); //red mushrooms
 	private int frames;
 	private int jCooldownCount = 0;
 	private boolean jumpWait = false;
@@ -77,14 +82,20 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private int invincibleCount = 0;
 	private boolean invincible = false;
 	private int lives = 5;
-	private boolean right, left;
+	private boolean right, left, collideL, collideR, marioBig;
 	private Font marioFont;
 	private boolean fireflowerPower = true;
 
 	private Image back2;
 	private int backX2 = -20;
-		
-	player mario = new player(430,ground,0,false,false,70,45);
+	
+	/*private Image[] marioRightWalkPics2 = new Image[20];
+	private Image[] marioLeftWalkPics2 = new Image[20];
+	private Image[] marioBigRightWalkPics2 = new Image[20];
+	private Image[] marioBigLeftWalkPics2 = new Image[20];*/
+	
+	
+	player mario = new player(430,ground,0,false,false,50,25);
 	fireball fball = new fireball(mario.getX(),mario.getY(),90,40,false,false,false);
 	
 	public GamePanel(MarioRun m)
@@ -112,14 +123,19 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		lifeIconPic = new ImageIcon("Mariopics/lifeMushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
 		fireballLPic = new ImageIcon("Mariopics/fireball.png").getImage().getScaledInstance(40,30,Image.SCALE_SMOOTH);
 		fireballRPic = new ImageIcon("Mariopics/fireballR.png").getImage().getScaledInstance(40,30,Image.SCALE_SMOOTH);
+		brickPic = new ImageIcon("Mariopics/mariobrick.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
+		questionPic = new ImageIcon("Mariopics/questionblock.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
+		shroomPic = new ImageIcon("Mariopics/redShroom.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
         for(int i=0; i<8; i++)
         {
-        	tmp = new ImageIcon("MarioPics/mariowalk" +Integer.toString(i)+".png").getImage().getScaledInstance(mario.getWidth()+5,mario.getHeight()+5,Image.SCALE_SMOOTH);
+        	Image tmp = new ImageIcon("MarioPics/mariowalk" +Integer.toString(i)+".png").getImage().getScaledInstance(mario.getWidth(),mario.getHeight(),Image.SCALE_SMOOTH);
+        	Image tmp2 = new ImageIcon("MarioPics/mariowalk" +Integer.toString(i)+".png").getImage().getScaledInstance(40,70,Image.SCALE_SMOOTH);
     		if(i<=3)
     		{
     			for(int z=0; z<5; z++)
     			{
     				marioRightWalkPics.add(tmp);
+    				marioBigRightWalkPics.add(tmp2);
     			}
     			
     		}
@@ -128,6 +144,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
         		for(int z=0; z<5; z++)
         		{
     				marioLeftWalkPics.add(tmp);
+    				marioBigLeftWalkPics.add(tmp2);
     			}
         		
         	}
@@ -154,6 +171,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
         loadCoins();
     	loadGoombas();
     	loadMushrooms();
+    	loadBricks();
 	}
 	
     public void addNotify()
@@ -183,6 +201,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    	checkCoinCollide();
 	    	checkGoombaCollide();
 	    	checkMushroomCollide();
+	    	checkShroomCollide();
+	    	checkBrickCollide();
 	    	moveGoombas();
 	    	moveMushrooms();
 	    	//System.out.println(mario.getJump());
@@ -268,6 +288,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				m.addX(-4);
 				m.addMin(-4);
 				m.addMax(-4);
+			}
+			for(ArrayList<brick> b2 : bricks)
+			{
+				for(brick b: b2)
+				{
+					b.addX(-4);
+				}
+			}
+			for(marioShroom mushroom: marioMushrooms)
+			{
+				mushroom.addX(-4);
 			}	
     	}
     	if(screen == "level2")
@@ -299,7 +330,18 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				m.addX(+4);
 				m.addMin(+4);
 				m.addMax(+4);
-			}	
+			}
+			for(ArrayList<brick> b2 : bricks)
+			{
+				for(brick b: b2)
+				{
+					b.addX(4);
+				}
+			}
+			for(marioShroom mushroom: marioMushrooms)
+			{
+				mushroom.addX(4);
+			}
     	}
     	if(screen == "level2")
     	{
@@ -311,29 +353,36 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	{
 		if(screen == "level1")
 		{
-			if(keys[KeyEvent.VK_RIGHT] )
+			if(!collideL)
 			{
-				right = true;
-				left = false;
-				if(shiftRight == false)
+				if(keys[KeyEvent.VK_RIGHT])
 				{
-					mario.addX(-10);
-				}
-				shiftRight = true;
-				shiftLeft = false;
-				moveBackLeft();
+					right = true;
+					left = false;
+					if(shiftRight == false)
+					{
+						mario.addX(-10);
+					}
+					shiftRight = true;
+					shiftLeft = false;
+					moveBackLeft();
+				}	
 			}
-			if(keys[KeyEvent.VK_LEFT] && backX <= 0)
+			
+			if(!collideR)
 			{
-				right = false;
-				left = true;
-				if(shiftLeft == false)
+				if(keys[KeyEvent.VK_LEFT] && backX <= 0)
 				{
-					mario.addX(10);
+					right = false;
+					left = true;
+					if(shiftLeft == false)
+					{
+						mario.addX(10);
+					}
+					shiftRight = false;
+					shiftLeft = true;
+					moveBackRight();
 				}
-				shiftRight = false;
-				shiftLeft = true;
-				moveBackRight();
 			}
 			
 			Point m = MouseInfo.getPointerInfo().getLocation();
@@ -422,7 +471,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		if((fball.getX() < mario.getX() - 380) || (fball.getX() > mario.getX() + 380))
 		{
 			fball.setUsed(false);
-		}
+		}	
 	}
 	
     public void jumpCooldown()
@@ -514,11 +563,11 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		int size;
     	boolean sameSpot = false;
     	Random rand = new Random();
-    	for(int i=0;i<70;i++)
+    	for(int i=0;i<40;i++)
     	{
     		plx = rand.nextInt(9000) + 500;
-    		ply = rand.nextInt(450) + 10;
-    		size = rand.nextInt(220) + 70;
+    		ply = rand.nextInt(250) + 150;
+    		size = rand.nextInt(320) + 150;
     		for(platform p : platforms)
     		{
     			Rectangle newRect = new Rectangle(plx,ply,size,10);
@@ -629,6 +678,56 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		}
     }
     
+    public void loadBricks()
+    {
+    	int x=0;
+    	int y=0;
+    	boolean sameSpot = false;
+    	Random rand = new Random();
+    	
+    	for(int i=0; i<30; i++)
+    	{
+    		x = rand.nextInt(9000) + 500;
+    		y = 430;
+    		for(ArrayList<brick> b2: bricks)
+    		{
+    			for(brick b: b2)
+    			{
+    				int dx = b2.get(b2.size()-1).getX() + 40 - b2.get(0).getX();
+    				Rectangle brickSegment = new Rectangle(b2.get(0).getX(), b2.get(0).getY(), dx, 40);
+    				
+    				Rectangle newRect0 = new Rectangle(x-40,y,40,40);
+    				Rectangle newRect = new Rectangle(x,y,40,40);
+    				Rectangle newRect1 = new Rectangle(x+40, y, 40, 40);
+    				Rectangle newRect2 = new Rectangle(x+80, y, 40, 40);
+    				Rectangle newRect3 = new Rectangle(x+120, y, 40, 40);
+    				Rectangle newRect4 = new Rectangle(x+160, y, 40, 40);
+    				Rectangle newRect5 = new Rectangle(x+200, y, 40, 40);
+	    			
+	    			if(newRect0.intersects(brickSegment) || newRect.intersects(brickSegment) || newRect1.intersects(brickSegment) || newRect2.intersects(brickSegment) || newRect3.intersects(brickSegment) || newRect4.intersects(brickSegment) || newRect5.intersects(brickSegment))
+	    			{
+	    				sameSpot = true;
+    				}
+    				
+    			}    			
+    		}
+    		if(!sameSpot)
+    		{	
+    			int randInt = rand.nextInt(4) + 2;
+    			ArrayList<brick> tmp = new ArrayList<brick>();
+    			for(int z=0; z<randInt; z++)
+    			{
+    				tmp.add(new brick(x+z*40, y, 40, 40));
+    			}
+    			bricks.add(tmp);
+    		}
+    		else
+    		{	
+    			sameSpot = false;
+    		}
+    	}
+    }
+    
     public void loadMushrooms()
     {
     	int r;
@@ -651,20 +750,66 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			}
 		}
     }
+    
+    public void checkBrickCollide()
+    {
+    	for(ArrayList<brick> b2: bricks)
+    	{
+    		for(brick b: b2)
+    		{
+    			Rectangle bLeft = new Rectangle(b2.get(0).getX(), b2.get(0).getY()+1,1,38); //left side of the brick segment
+    			Rectangle bRight = new Rectangle(b2.get(b2.size()-1).getX()+40, b2.get(b2.size()-1).getY()+1,1,38); //right side of the brick segment
+    			
+    			Rectangle brickBot = new Rectangle(b.getX()+2,b.getY()+40,36,1);
+		    	//Rectangle brickLeft = new Rectangle(b.getX(),b.getY(),1,39);
+		    	//Rectangle brickRight = new Rectangle(b.getX()+40,b.getY(),1,39);
+		    	Rectangle brickTop = new Rectangle(b.getX(),b.getY(),40, 1);
+		    	
+		    	Rectangle marioBot = new Rectangle(mario.getX(),mario.getY()+mario.getHeight(),mario.getWidth(),10);
+		    	Rectangle marioLeft = new Rectangle(mario.getX(),mario.getY(),10,mario.getHeight());
+		    	Rectangle marioRight = new Rectangle(mario.getX()+mario.getWidth()-10,mario.getY(),10,mario.getHeight());
+		    	Rectangle marioTop = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),10);
+		    	
+		    	Rectangle guy = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+		    	if(bLeft.intersects(guy)){
+		        	collideL = true;
+		        	mario.setVY(5);	
+		        }
+		        if(bRight.intersects(guy)){
+		        	collideR = true;
+		        	mario.setVY(5);
+		        }
+		    	if(brickBot.intersects(guy)){
+		        	mario.setVY(5);
+		        }
+		        if(brickTop.intersects(guy)){
+
+		        	mario.setY(b.getY()-mario.getHeight());
+		        	mario.setVY(0);
+		        	mario.setJump(false);
+		        }
+		        if(mario.getY()==ground || mario.getY()<= b.getY()-50)
+		        {
+		        	collideL = false;
+		        	collideR = false;
+		        }
+    		}
+    	}  	
+    }
 	
     public void checkPlatformCollide()
     {
     	boolean onPlatform = false;
     	for(platform p : platforms)
     	{
-			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+40,mario.getWidth()+10,mario.getHeight()-40); //player has 10 pixel clearance for x position
+			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+mario.getHeight(),mario.getWidth()+10,10); //player has 10 pixel clearance for x position
 			Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
 			if(mario.getVY() >= 0 && mario.getJump() == true)
 			{
 	    		if(m.intersects(plat))
 	    		{
 	    			onPlatform = true;
-					mario.setY(p.getY()-70);
+					mario.setY(p.getY()-mario.getHeight());
 					mario.setVY(0);
 					mario.setJump(false);
 	    		}
@@ -740,6 +885,40 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     			{
     				lives += 1;
     				mu.setCollected(true);
+    			}
+    		}
+    	}
+    }
+    
+    public void checkShroomCollide()
+    {
+    	boolean collide = false;
+    	for(marioShroom mushroom: marioMushrooms)
+    	{
+    		
+			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+    		Rectangle shroom = new Rectangle(mushroom.getX(),mushroom.getY(),40,40);
+    		if(m.intersects(shroom))
+    		{
+    			if(mushroom.getVY() != 0 || mushroom.getGround())
+    			{
+    				mushroom.setCond(false);
+    				if(!marioBig)
+    				{
+    					mario.setHeight(70);
+		    			mario.setWidth(40);
+		    			marioBig = true;
+	    				ground-=20;
+	    				
+	    				if(shiftLeft)
+	    				{
+	    					currPic = marioBigLeftWalkPics.get(0);
+	    				}
+	    				if(shiftRight)
+	    				{
+	    					currPic = marioBigRightWalkPics.get(0);
+	    				}
+    				}
     			}
     		}
     	}
@@ -845,6 +1024,87 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					g.drawImage(coinPic, c.getX(), c.getY(), null);
 				}
 			}
+			for(ArrayList<brick> b2: bricks)
+			{
+				for(int i=0; i<b2.size(); i++)
+				{
+					Rectangle m = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),10);
+					Rectangle brickBot = new Rectangle(b2.get(i).getX()+4,b2.get(i).getY()+40,32,1);
+
+					if(m.intersects(brickBot))
+					{
+						g.drawImage(brickPic,b2.get(i).getX(),b2.get(i).getY()-15,null);
+						if(i==1 && b2.size()==3)
+						{
+							g.drawImage(questionPic,b2.get(1).getX(),b2.get(1).getY()-15,null);
+							if(!b2.get(i).getShroom())
+							{
+								marioMushrooms.add(new marioShroom(b2.get(1).getX(), b2.get(1).getY()-45, 0));
+								currBrick = b2;
+								b2.get(i).setShroom(true);
+							}
+						}
+						if(i==2 && b2.size()==5)
+						{
+							g.drawImage(questionPic,b2.get(2).getX(),b2.get(2).getY()-15,null);
+							if(!b2.get(i).getShroom())
+							{
+								marioMushrooms.add(new marioShroom(b2.get(2).getX(), b2.get(2).getY()-45, 0));
+								currBrick = b2;
+								b2.get(i).setShroom(true);
+							}
+						}
+					}	
+					else
+					{
+						g.drawImage(brickPic,b2.get(i).getX(),b2.get(i).getY(),null);
+						if(i==1 && b2.size()==3)
+						{
+							g.drawImage(questionPic,b2.get(1).getX(),b2.get(1).getY(),null);
+						}
+						if(i==2 && b2.size()==5)
+						{
+							g.drawImage(questionPic,b2.get(2).getX(),b2.get(2).getY(),null);
+						}
+					}
+				}
+			}
+			for(marioShroom mushroom : marioMushrooms)
+	    	{
+	    		if(mushroom.getCond())
+	    		{
+	    			g.drawImage(shroomPic, mushroom.getX(),mushroom.getY(),null);
+    				mushroom.addX(3);
+	    		}
+    			//for(ArrayList<brick> b2: bricks)
+    			//{
+    				//for(brick b: b2)
+    				//{
+    					//System.out.println(mushroom.getGround());
+    					int dx = currBrick.get(currBrick.size()-1).getX()+40 - currBrick.get(0).getX();
+    					//Rectangle plat = new Rectangle(b2.get(0).getX(), b2.get(0).getY(), dx, 40);
+    					Rectangle mushRect = new Rectangle(mushroom.getX(), mushroom.getY(), 40, 40);
+    					g.setColor(Color.red);
+    					//g.drawRect(plat.x, plat.y, plat.width, plat.height);
+    					g.drawRect(mushRect.x, mushRect.y, mushRect.width, mushRect.height);
+    					if(mushroom.getX() > currBrick.get(0).getX()+dx && mushroom.getGround() == false)
+    					{		
+		    				mushroom.setVY(10);
+		    			}
+		    			if(mushroom.getY()>=ground)
+	    				{
+	    					mushroom.setGround(true);
+		    				mushroom.setVY(0);
+		    				mushroom.setY(515);
+	    					//mushroom.setGround(true);
+	    				}
+	    					mushroom.addY(mushroom.getVY());
+	    				
+		    			System.out.println(mushroom.getY());
+		    			//System.out.println(mushroom.getVY());
+    				//}
+    			//}
+    		}
 			for(goomba gb : goombas)
 			{
 				if(gb.getKilled() == false)
@@ -910,17 +1170,33 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			
 			if(!right && !left)
 			{
-	        	g.drawImage(currPic, mario.getX(), mario.getY(), null);
+	        	g.drawImage(currPic, mario.getX(), mario.getY(), null);	
 	        }
 			if(right)
 			{
-	        	currPic = marioRightWalkPics.get(0);
-	            g.drawImage(marioRightWalkPics.get(frames),mario.getX(),mario.getY(),null);
+				if(marioBig)
+				{
+					currPic = marioBigRightWalkPics.get(0);
+					g.drawImage(marioBigRightWalkPics.get(frames),mario.getX(),mario.getY(),null);
+				}
+				else
+				{
+					currPic = marioRightWalkPics.get(0);
+	            	g.drawImage(marioRightWalkPics.get(frames),mario.getX(),mario.getY(),null);
+				}
 	        }
 	        if(left)
 	        {
-	        	currPic = marioLeftWalkPics.get(0);
-	            g.drawImage(marioLeftWalkPics.get(frames),mario.getX(),mario.getY(),null);
+	        	if(marioBig)
+				{
+					currPic = marioBigLeftWalkPics.get(0);
+					g.drawImage(marioBigLeftWalkPics.get(frames),mario.getX(),mario.getY(),null);
+				}
+				else
+				{
+					currPic = marioLeftWalkPics.get(0);
+	            	g.drawImage(marioLeftWalkPics.get(frames),mario.getX(),mario.getY(),null);	
+				}
 	        }
 			frames++;
 			if(frames==20)
@@ -934,6 +1210,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			g.setFont(marioFont);
 			g.drawString("x"+Integer.toString(lives), 37, 35);
 			g.drawString(Integer.toString(collectedCoins), 33, 69);
+			
+			Rectangle mRect = new Rectangle(mario.getX()-5,mario.getY()+mario.getHeight(),mario.getWidth()+10,10);
+			g.drawRect(mRect.x,mRect.y,mRect.width,mRect.height);
     	}
     	if(screen == "level2")
     	{
@@ -952,7 +1231,7 @@ class player
 	private boolean jump;
 	private int height;
 	private int width;
-	
+		
 	public player(int px, int py, int pvy, boolean j, boolean f, int h, int w)
 	{
 		X = px;
@@ -960,7 +1239,7 @@ class player
 		VY = pvy;
 		jump = j;
 		height = h;
-		width = w;
+		width = w;	
 	}
 	
 	public int getHeight()
@@ -1015,6 +1294,14 @@ class player
 	public void setVY(int num)
 	{
 		VY = num;
+	}
+	public void setHeight(int n)
+	{
+		height = n;
+	}
+	public void setWidth(int n)
+	{
+		width = n;
 	}
 }
 
@@ -1472,5 +1759,121 @@ class fireball
 	public void setRight(boolean b)
 	{
 	    right = b;
+	}
+}
+
+class brick
+{
+	private int x;
+	private int y;
+	private int sizeX;
+	private int sizeY;
+	private ArrayList<Image>marioShroomPics = new ArrayList<Image>();
+	private boolean shroom = false; 
+
+	public brick(int x1, int y1, int sizeX1, int sizeY1)
+	{
+		x = x1;
+		y = y1;
+		sizeX = sizeX1;
+		sizeY = sizeY1;
+	}
+	
+	public int getX()
+	{
+		return x;
+	}
+	
+	public int getY()
+	{
+		return y;
+	}
+	
+	public boolean getShroom()
+	{
+		return shroom;
+	}
+	
+	public void addX(int n)
+	{
+		x += n;
+	}
+	
+	public void setShroom(boolean bool)
+	{
+		shroom = bool;
+	}
+}
+
+class marioShroom
+{
+	private int x;
+	private int y;
+	private int vy;
+	private Image shroomPic;
+	private boolean onGround = false;
+	private boolean cond = true;
+	
+	public marioShroom(int x1, int y1, int vy1)
+	{
+		x = x1;
+		y = y1;
+		vy = vy1;
+		shroomPic = new ImageIcon("Mariopics/redShroom.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
+	}
+	
+	public int getX()
+	{
+		return x;
+	}
+	
+	public int getY()
+	{
+		return y;
+	}
+	
+	public int getVY()
+	{
+		return vy;
+	}
+	
+	public boolean getGround()
+	{
+		return onGround;
+	}
+	
+	public boolean getCond()
+	{
+		return cond;
+	}
+	
+	public void addX(int x1)
+	{
+		x += x1;
+	}
+	
+	public void addY(int y1)
+	{
+		y += y1;
+	}
+	
+	public void setVY(int vy1)
+	{
+		vy = vy1;
+	}
+	
+	public void setY(int y1)
+	{
+		y = y1;
+	}
+	
+	public void setGround(boolean bool)
+	{
+		onGround = bool;
+	}
+	
+	public void setCond(boolean bool)
+	{
+		cond = bool;
 	}
 }
