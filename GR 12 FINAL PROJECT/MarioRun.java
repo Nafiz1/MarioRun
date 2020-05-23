@@ -1746,6 +1746,18 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				g.drawRect(s.getX(), s.getY(), s.getSizeX(), s.getSizeY());
 			}
 			
+			if(fball.getUsed() == true)
+			{
+				if(fball.getLeft() == true)
+				{
+					g.drawImage(fireballLPic, fball.getX(), fball.getY(), null);
+				}
+				else
+				{
+					g.drawImage(fireballRPic, fball.getX(), fball.getY(), null);
+				}
+			}
+			
 			if(!right && !left)
 			{
 				if(marioBig)
