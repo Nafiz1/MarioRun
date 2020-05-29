@@ -328,7 +328,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
     		invincible = true;
     		invincibleCount += 1;
-    		if(invincibleCount == 170)
+    		if(invincibleCount == 100)
     		{
 	    		invincible = false;
 	    		invincibleCount = 0;
@@ -1699,19 +1699,19 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		}
 				if(marioBig) //mario grows
 				{
-					if(evolveCD<=50)
+					if(evolveCD<=25)
 					{
 						System.out.println(mario.getY());
 						g.drawImage(tmp.get(0), mario.getX(), mario.getY()+13, null);
 						evolveCD++;
 					}
-					if(evolveCD>=50 && evolveCD<=100)
+					if(evolveCD>=25 && evolveCD<=50)
 					{
 						//System.out.println(true+"1");
 						g.drawImage(tmp.get(1), mario.getX(), mario.getY()+6, null);
 						evolveCD++;
 					}
-					if(evolveCD>=100 && evolveCD<=150)
+					if(evolveCD>=50 && evolveCD<=75)
 					{
 						//System.out.println(true+"2");
 						if(shiftRight)
@@ -1724,11 +1724,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						}
 						evolveCD++;
 					}
-					if(evolveCD==150)
+					if(evolveCD==75)
 					{
 						evolveCD = 0;
 						collide = false;
-						//mario.setVY(evolveVY);
 					}
 					if(shiftLeft)
 					{
@@ -1755,18 +1754,18 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 				else //mario shrinks
 				{
-					if(evolveCD<=50)
+					if(evolveCD<=25)
 					{
 						System.out.println(ground);
 						g.drawImage(tmp.get(1), mario.getX(), mario.getY()-13, null);
 						evolveCD++;
 					}
-					if(evolveCD>=50 && evolveCD<=100)
+					if(evolveCD>=25 && evolveCD<=50)
 					{
 						g.drawImage(tmp.get(0), mario.getX(), mario.getY()-6, null);
 						evolveCD++;
 					}
-					if(evolveCD>=100 && evolveCD<=150)
+					if(evolveCD>=50 && evolveCD<=75)
 					{
 						if(shiftRight)
 						{
@@ -1792,7 +1791,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						}
 						evolveCD++;
 					}
-					if(evolveCD==150)
+					if(evolveCD==75)
 					{
 						evolveCD = 0;
 						collide = false;
