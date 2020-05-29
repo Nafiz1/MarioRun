@@ -1622,7 +1622,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{
 				if(totalCoins >= 5)
 				{
-					grow();
+					if(marioBig == false)
+					{
+						grow();
+					}
 					totalCoins -= 5;
 				}
 			}
