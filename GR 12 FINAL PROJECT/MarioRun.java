@@ -1,4 +1,6 @@
+//MarioRun.java
 //Nafiz Hasan and Ashad Ahmed
+//
 
 import java.util.*;
 import java.io.*;
@@ -48,22 +50,16 @@ public class MarioRun extends JFrame implements ActionListener
     {
 		MarioRun frame = new MarioRun();
     }
-    public static Image resize(Image pic, int w, int h)
-    {
-    	return pic.getScaledInstance(w,h,Image.SCALE_SMOOTH);
-    }
 }
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "menu";
+	private String screen = "level3";
 	
 	private boolean []keys;
 	private MarioRun mainFrame;
 	private Point mouse;
 	private Rectangle menuPlay;
-	private Rectangle menuInstructions;
-	private Rectangle menuCredits;
 	private Rectangle intermissionStore;
 	private Rectangle intermissionNext;
 	private Rectangle store1;
@@ -71,8 +67,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private Rectangle store3;
 	private Rectangle storePrev;
 	private int totalCoins;
-	private Image backbtn, storebtn, instructionsbtn, nextbtn, creditsbtn, startbtn;
-	private Image back, platBack, menuback, menuinstructions, menucredits, intermissionback, storeback, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireFlowerIconPic, marioShroomIconPic, fireballLPic, fireballRPic, brickPic, shroomPic, questionPic;
+	private Image back, platBack, menuback, intermissionback, storeback, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireFlowerIconPic, marioShroomIconPic, fireballLPic, fireballRPic, brickPic, shroomPic, questionPic;
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioBigLeftWalkPics = new ArrayList<Image>();
@@ -84,13 +79,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private boolean shiftLeft = false;
 	private boolean shiftRight = false;
 	private boolean collide, invE;
-	private ArrayList<platform>platforms = new ArrayList<platform>();
-	private ArrayList<coin>coins = new ArrayList<coin>();
-	private ArrayList<mushroom>mushrooms = new ArrayList<mushroom>(); //green mushrooms
-	private ArrayList<goomba> goombas = new ArrayList<goomba>();
 	private ArrayList<brick> currBrick = new ArrayList<brick>();
-	private ArrayList<ArrayList<brick>>bricks = new ArrayList<ArrayList<brick>>();
-	private ArrayList<marioShroom> marioMushrooms = new ArrayList<marioShroom>(); //red mushrooms
 	private ArrayList<ArrayList<Image>> evolvePicsRight = new ArrayList<ArrayList<Image>>();
 	private ArrayList<ArrayList<Image>> evolvePicsLeft = new ArrayList<ArrayList<Image>>();
 	private ArrayList<BufferedImage> platPics = new ArrayList<BufferedImage>();
@@ -108,17 +97,49 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private Font marioFont;
 	private boolean fireflowerPower = true;
 	private int breakCount = 0;
-
+	
+	private ArrayList<coin> currCoins = new ArrayList<coin>();
+	private ArrayList<platform> currPlatforms = new ArrayList<platform>();
+	private ArrayList<mushroom> currMushrooms = new ArrayList<mushroom>();
+	private ArrayList<goomba> currGoombas = new ArrayList<goomba>();
+	private ArrayList<spiny> currSpinys = new ArrayList<spiny>();
+	private ArrayList<bulletBill> currBills = new ArrayList<bulletBill>();
+	private ArrayList<ArrayList<brick>> currBricks = new ArrayList<ArrayList<brick>>();
+	private ArrayList<marioShroom> currMarioMushrooms = new ArrayList<marioShroom>();
+	private Image currBack;
+	private int currBackX;
+	
+	//Each level consists of at least some platforms, coins, green mushrooms (gives extra lives), goombas, bricks and question blocks
+	//and red mushrooms (transform mario into big mario). Level 2 introduces spinys and level 3 brings bullet bills.
+	//Level1------------------------
+	private ArrayList<platform>platforms = new ArrayList<platform>();
+	private ArrayList<coin>coins = new ArrayList<coin>();
+	private ArrayList<mushroom>mushrooms = new ArrayList<mushroom>(); //green mushrooms
+	private ArrayList<goomba> goombas = new ArrayList<goomba>();
+	private ArrayList<ArrayList<brick>>bricks = new ArrayList<ArrayList<brick>>();
+	private ArrayList<marioShroom> marioMushrooms = new ArrayList<marioShroom>(); //red mushrooms
+	//Level2------------------------
 	private Image back2;
 	private int backX2 = -20;
 	private ArrayList<coin>coins2 = new ArrayList<coin>();
 	private ArrayList<platform>platforms2 = new ArrayList<platform>();
+	private ArrayList<mushroom>mushrooms2 = new ArrayList<mushroom>();
 	private ArrayList<goomba> goombas2 = new ArrayList<goomba>();
 	private ArrayList<spiny> spinys = new ArrayList<spiny>();
-
+	private ArrayList<ArrayList<brick>>bricks2 = new ArrayList<ArrayList<brick>>();
+	private ArrayList<marioShroom> marioMushrooms2 = new ArrayList<marioShroom>();
+	//Level3------------------------
 	private Image back3;
 	private int backX3 = -20;
 	private int intermissionNum;
+	private ArrayList<coin>coins3 = new ArrayList<coin>();
+	private ArrayList<platform>platforms3 = new ArrayList<platform>();
+	private ArrayList<mushroom>mushrooms3 = new ArrayList<mushroom>();
+	private ArrayList<goomba> goombas3 = new ArrayList<goomba>();
+	private ArrayList<spiny> spinys2 = new ArrayList<spiny>();
+	private ArrayList<bulletBill> bills = new ArrayList<bulletBill>();
+	private ArrayList<ArrayList<brick>>bricks3 = new ArrayList<ArrayList<brick>>();
+	private ArrayList<marioShroom> marioMushrooms3 = new ArrayList<marioShroom>();
 	
 	player mario = new player(430,ground,0,false,false,50,25);
 	fireball fball = new fireball(mario.getX(),mario.getY(),40,30,false,false,false);
@@ -128,11 +149,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
 	public GamePanel(MarioRun m)
 	{
-		addMouseListener(this);
-		
 		menuPlay = new Rectangle(590,200,200,50);
-		menuInstructions = new Rectangle(590,300,200,50);
-		menuCredits = new Rectangle(590,400,200,50);
+		addMouseListener(this);
 		
 		intermissionStore = new Rectangle(100,200,200,50);
 		intermissionNext = new Rectangle(590,200,200,50);
@@ -147,19 +165,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		back3 = new ImageIcon("MarioBackground3.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		
 		keys = new boolean[KeyEvent.KEY_LAST+1];
-		backbtn = new ImageIcon("buttons/backbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
-		instructionsbtn = new ImageIcon("buttons/instructionsbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
-		creditsbtn = new ImageIcon("buttons/creditsbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
-		nextbtn = new ImageIcon("buttons/nextbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
-		storebtn = new ImageIcon("buttons/storebtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
-		startbtn = new ImageIcon("buttons/startbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
-		
 		back = new ImageIcon("MarioBackground.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		storeback = new ImageIcon("storeBackground.jpg").getImage().getScaledInstance(900,620,Image.SCALE_SMOOTH);
 		intermissionback = new ImageIcon("intermissionBackground.jpg").getImage();
 		menuback = new ImageIcon("MenuBackground.png").getImage();
-		menuinstructions = new ImageIcon("MenuInstructions.png").getImage();
-		menucredits = new ImageIcon("MenuCredits.png").getImage();
 		coinPic = new ImageIcon("Mariopics/coin.gif").getImage().getScaledInstance(15,25,Image.SCALE_SMOOTH);
 		mushroomPic = new ImageIcon("Mariopics/mushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
 		fireFlowerIconPic = new ImageIcon("Mariopics/fireFlowerIconPic.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
@@ -244,10 +253,13 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	loadMushrooms();
     	loadBricks();
     	
-        loadCoins2();
-        loadPlatforms2();
-    	loadGoombas2();
+        //loadCoins2();
+        //loadPlatforms2();
+    	//loadGoombas2();
     	loadSpinys();
+    	loadBills();
+    	System.out.println(spinys2.size());
+
 	}
 	
     public void addNotify()
@@ -259,53 +271,28 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void update()
     {
-    	if(screen == "level1")
-    	{
-	    	move();
-	    	jump();
-	    	shoot();
-	    	jumpCooldown();
-	    	invincibilityCooldown();
-	    	checkDeath();
-	    	checkFinish();
-	    	checkCollectedCoins();
-	    	checkPlatformCollide();
-	    	checkCoinCollide();
-	    	checkGoombaCollide();
-	    	checkMushroomCollide();
-	    	checkShroomCollide();
-	    	checkBrickCollide();
-	    	moveGoombas();
-	    	moveMushrooms();
-    	}
-    	if(screen == "level2")
-    	{
-	    	move();
-	    	jump();
-	    	shoot();
-	    	jumpCooldown();
-	    	invincibilityCooldown();
-	    	checkDeath();
-	    	checkFinish();
-	    	checkCollectedCoins();
-	    	checkPlatformCollide();
-	    	checkCoinCollide();
-	    	checkGoombaCollide();
-	    	moveGoombas();
-	    	checkSpinyCollide();
-	    	moveSpinys();
-	    	checkShroomCollide();
-    	}
-    	if(screen == "level3")
-    	{
-	    	move();
-	    	jump();
-	    	shoot();
-	    	jumpCooldown();
-	    	invincibilityCooldown();
-	    	checkDeath();
-	    	checkFinish();
-    	}
+    	getCurr();
+    	move();
+    	jump();
+    	shoot();
+    	jumpCooldown();
+    	invincibilityCooldown();
+    	checkDeath();
+    	checkFinish();
+    	checkCollectedCoins();
+    	checkPlatformCollide();
+    	checkCoinCollide();
+    	checkGoombaCollide();
+    	checkMushroomCollide();
+    	checkShroomCollide();
+    	checkBrickCollide();
+    	checkSpinyCollide();
+    	checkBillCollide();
+    	moveGoombas();
+    	moveMushrooms();
+    	moveSpinys();
+    	moveBills();
+    	
 		mouse = MouseInfo.getPointerInfo().getLocation();
 		Point offset = getLocationOnScreen();
 		mouse.translate(-offset.x, -offset.y);
@@ -344,7 +331,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     public void shrink()
     {
 		mario.setHeight(50);
-		mario.setWidth(40);
+		mario.setWidth(25);
 		marioBig = false;
 		collide = true;
 		ground += 20;
@@ -363,6 +350,48 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		mario.setY(mario.getY()-20);
 		evolveVY = mario.getVY();
 		invE = true;
+    }
+    
+    public void getCurr()
+    {
+    	if(screen == "level1")
+    	{
+    		currPlatforms = platforms;
+    		currGoombas = goombas;
+    		currCoins = coins;
+    		currMushrooms = mushrooms;
+    		currBricks = bricks;
+    		currMarioMushrooms = marioMushrooms;
+    		currBackX = backX;
+    		currBack = back;
+    	}
+    	
+    	if(screen == "level2")
+    	{
+    		currPlatforms = platforms2;
+    		currGoombas = goombas2;
+    		currCoins = coins2;
+    		currMushrooms = mushrooms2;
+    		currBricks = bricks2;
+    		currMarioMushrooms = marioMushrooms2;
+    		currSpinys = spinys;
+    		currBackX = backX2;
+    		currBack = back2;
+    	}
+    	
+    	if(screen == "level3")
+    	{
+    		currPlatforms = platforms3;
+    		currGoombas = goombas3;
+    		currCoins = coins3;
+    		currMushrooms = mushrooms3;
+    		currBricks = bricks3;
+    		currMarioMushrooms = marioMushrooms3;
+    		currSpinys = spinys2;
+    		currBills = bills;
+    		currBackX = backX3;
+    		currBack = back3;
+    	}
     }
     
     public void getTmp()
@@ -390,7 +419,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			}
 			else if(mario.getVY()!=0)
 			{
-				tmp = evolvePicsRight.get(frames);
+				tmp = evolvePicsLeft.get(frames);
 			}
 			else
 			{
@@ -455,135 +484,95 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void moveBackLeft()
     {
-    	if(screen == "level1")
-    	{
-			backX -= 4;
-			for(platform p : platforms)
+		backX -= 4;
+		for(platform p : currPlatforms)
+		{
+			p.addX(-4);
+		}
+		for(coin c : currCoins)
+		{
+			c.addX(-4);
+		}
+		for(goomba g : currGoombas)
+		{
+			g.addX(-4);
+			g.addMin(-4);
+			g.addMax(-4);
+		}
+		for(mushroom m : currMushrooms)
+		{
+			m.addX(-4);
+			m.addMin(-4);
+			m.addMax(-4);
+		}
+		for(ArrayList<brick> b2 : currBricks)
+		{
+			for(brick b: b2)
 			{
-				p.addX(-4);
+				b.addX(-4);
 			}
-			for(coin c : coins)
-			{
-				c.addX(-4);
-			}
-			for(goomba g : goombas)
-			{
-				g.addX(-4);
-				g.addMin(-4);
-				g.addMax(-4);
-			}
-			for(mushroom m : mushrooms)
-			{
-				m.addX(-4);
-				m.addMin(-4);
-				m.addMax(-4);
-			}
-			for(ArrayList<brick> b2 : bricks)
-			{
-				for(brick b: b2)
-				{
-					b.addX(-4);
-				}
-			}
-			for(marioShroom mushroom: marioMushrooms)
-			{
-				mushroom.addX(-4);
-			}	
-    	}
-    	if(screen == "level2")
-    	{
-			backX2 -= 4;
-			for(platform p : platforms2)
-			{
-				p.addX(-4);
-			}
-			for(coin c : coins2)
-			{
-				c.addX(-4);
-			}
-			for(goomba g : goombas2)
-			{
-				g.addX(-4);
-				g.addMin(-4);
-				g.addMax(-4);
-			}
-			for(spiny s : spinys)
-			{
-				s.addX(-4);
-				s.addMin(-4);
-				s.addMax(-4);
-			}
-    	}
-    	if(screen == "level3")
-    	{
-			backX3 -= 4;
-    	}
+		}
+		for(marioShroom mushroom: currMarioMushrooms)
+		{
+			mushroom.addX(-4);
+		}	
+		for(bulletBill bb : currBills)
+		{
+			bb.addX(-4);
+			bb.addBX(-4);
+		}
+		for(spiny s : currSpinys)
+		{
+			s.addX(-4);
+			s.addMin(-4);
+			s.addMax(-4);
+		}
     }
     public void moveBackRight()
     {
-    	if(screen == "level1")
-    	{
-			backX += 4;
-			for(platform p : platforms)
+		backX += 4;
+		for(platform p : currPlatforms)
+		{
+			p.addX(+4);
+		}
+		for(coin c : currCoins)
+		{
+			c.addX(+4);
+		}
+		for(goomba g : currGoombas)
+		{
+			g.addX(+4);
+			g.addMin(+4);
+			g.addMax(+4);
+		}
+		for(mushroom m : currMushrooms)
+		{
+			m.addX(+4);
+			m.addMin(+4);
+			m.addMax(+4);
+		}
+		for(ArrayList<brick> b2 : currBricks)
+		{
+			for(brick b: b2)
 			{
-				p.addX(+4);
+				b.addX(4);
 			}
-			for(coin c : coins)
-			{
-				c.addX(+4);
-			}
-			for(goomba g : goombas)
-			{
-				g.addX(+4);
-				g.addMin(+4);
-				g.addMax(+4);
-			}
-			for(mushroom m : mushrooms)
-			{
-				m.addX(+4);
-				m.addMin(+4);
-				m.addMax(+4);
-			}
-			for(ArrayList<brick> b2 : bricks)
-			{
-				for(brick b: b2)
-				{
-					b.addX(4);
-				}
-			}
-			for(marioShroom mushroom: marioMushrooms)
-			{
-				mushroom.addX(4);
-			}
-    	}
-    	if(screen == "level2")
-    	{
-			backX2 += 4;
-			for(platform p : platforms2)
-			{
-				p.addX(+4);
-			}
-			for(coin c : coins2)
-			{
-				c.addX(+4);
-			}
-			for(goomba g : goombas2)
-			{
-				g.addX(+4);
-				g.addMin(+4);
-				g.addMax(+4);
-			}
-			for(spiny s : spinys)
-			{
-				s.addX(+4);
-				s.addMin(+4);
-				s.addMax(+4);
-			}
-    	}
-    	if(screen == "level3")
-    	{
-			backX3 += 4;
-    	}
+		}
+		for(marioShroom mushroom: currMarioMushrooms)
+		{
+			mushroom.addX(4);
+		}
+		for(bulletBill bb : currBills)
+		{
+			bb.addX(4);
+			bb.addBX(4);
+		}
+		for(spiny s : currSpinys)
+		{
+			s.addX(+4);
+			s.addMin(+4);
+			s.addMax(+4);
+		}
     }
 	
 	public void move()
@@ -784,114 +773,75 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
   
     public void moveGoombas()
     {
-    	if(screen == "level1")
-    	{
-			for(goomba g : goombas)
+		for(goomba g : currGoombas)
+		{
+			if(!g.getKilled())
 			{
-				if(!g.getKilled())
+				if(g.getLeft() == true)
 				{
-					if(g.getLeft() == true)
+					if(g.getX() >= g.getMin())
 					{
-						if(g.getX() >= g.getMin())
-						{
-							g.addX(-1);
-						}
-						else
-						{
-							g.setLeft(false);
-							g.setRight(true);
-						}
+						g.addX(-1);
 					}
-					if(g.getRight() == true)
+					else
 					{
-						if(g.getX() <= g.getMax())
-						{
-							g.addX(+1);
-						}
-						else
-						{
-							g.setLeft(true);
-							g.setRight(false);
-						}
+						g.setLeft(false);
+						g.setRight(true);
 					}
 				}
-			}	
-    	}
-    	if(screen == "level2")
-    	{
-			for(goomba g : goombas2)
-			{
-				if(!g.getKilled())
+				if(g.getRight() == true)
 				{
-					if(g.getLeft() == true)
+					if(g.getX() <= g.getMax())
 					{
-						if(g.getX() >= g.getMin())
-						{
-							g.addX(-1);
-						}
-						else
-						{
-							g.setLeft(false);
-							g.setRight(true);
-						}
+						g.addX(+1);
 					}
-					if(g.getRight() == true)
+					else
 					{
-						if(g.getX() <= g.getMax())
-						{
-							g.addX(+1);
-						}
-						else
-						{
-							g.setLeft(true);
-							g.setRight(false);
-						}
+						g.setLeft(true);
+						g.setRight(false);
 					}
 				}
-			}	
-    	}
+			}
+		}	
     }
     
     public void moveSpinys()
     {
-    	if(screen == "level2")
-    	{
-			for(spiny s : spinys)
+		for(spiny s : currSpinys)
+		{
+			if(!s.getKilled())
 			{
-				if(!s.getKilled())
+				if(s.getLeft() == true)
 				{
-					if(s.getLeft() == true)
+					if(s.getX() >= s.getMin())
 					{
-						if(s.getX() >= s.getMin())
-						{
-							s.addX(-1);
-						}
-						else
-						{
-							s.setLeft(false);
-							s.setRight(true);
-						}
+						s.addX(-1);
 					}
-					if(s.getRight() == true)
+					else
 					{
-						if(s.getX() <= s.getMax())
-						{
-							s.addX(+1);
-						}
-						else
-						{
-							s.setLeft(true);
-							s.setRight(false);
-						}
+						s.setLeft(false);
+						s.setRight(true);
 					}
 				}
-			}	
-    	}
+				if(s.getRight() == true)
+				{
+					if(s.getX() <= s.getMax())
+					{
+						s.addX(+1);
+					}
+					else
+					{
+						s.setLeft(true);
+						s.setRight(false);
+					}
+				}
+			}
+		}	
     }
     
     public void moveMushrooms()
     {
-		for(mushroom m : mushrooms)
+		for(mushroom m : currMushrooms)
 		{
 			if(!m.getCollected())
 			{
@@ -923,271 +873,371 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		}
     }
     
-    public void loadPlatforms()
+    public void moveBills()
     {
-		int plx;
-		int ply;
-		int size;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	for(int i=0;i<40;i++)
+    	for(bulletBill bb: bills)
     	{
-    		plx = rand.nextInt(9000) + 500;
-    		ply = rand.nextInt(250) + 150;
-    		size = rand.nextInt(320) + 150;
-    		for(platform p : platforms)
+    		
+    		if(bb.getCD())
     		{
-    			Rectangle newRect = new Rectangle(plx,ply,size,555-ply);
-    			Rectangle oldRect = new Rectangle(p.getX()-10,p.getY()-40,p.getSizeX()+20,p.getSizeY()+80);
-    			if(newRect.intersects(oldRect))
+    			if(bb.getLeft())
     			{
-    				sameSpot = true;
+    				bb.addX(-2);
     			}
-    			
-    		}
-    		if(sameSpot == false)
-    		{
-    			platform plat = new platform(plx,ply,size,10,false);
-    			platforms.add(plat);
-    			platPics.add(platPic.getSubimage(0, 13, plat.getSizeX(), 545 - plat.getY()));
-    			platTopPics.add(platPic.getSubimage(0, 0, plat.getSizeX(), 10));
+	    		if(bb.getRight())
+	    		{
+	    			bb.addX(2);
+	    		}
     		}
     		else
     		{
-    			sameSpot = false;
+    			bb.setCD(true);
+				if(bb.getBX()< mario.getX())
+				{
+					bb.setRight(true);
+					bb.setLeft(false);
+					
+				}
+				if(bb.getBX()>= mario.getX())
+				{
+					bb.setLeft(true);
+					bb.setRight(false);
+				}	
     		}
     	}
     }
     
-    public void loadPlatforms2()
+    public void loadPlatforms()
     {
-		int plx;
-		int ply;
-		int size;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	for(int i=0;i<40;i++)
+    	for(int z=1; z<4; z++)
     	{
-    		plx = rand.nextInt(9000) + 500;
-    		ply = rand.nextInt(250) + 150;
-    		size = rand.nextInt(320) + 150;
-    		for(platform p : platforms2)
-    		{
-    			Rectangle newRect = new Rectangle(plx,ply,size,10);
-    			Rectangle oldRect = new Rectangle(p.getX()-10,p.getY()-40,p.getSizeX()+20,p.getSizeY()+80);
-    			if(newRect.intersects(oldRect))
-    			{
-    				sameSpot = true;
-    			}
-    		}
-    		if(sameSpot == false)
-    		{
-    			platforms2.add(new platform(plx,ply,size,10,false));
-    		}
-    		else
-    		{
-    			sameSpot = false;
-    		}
+    		int plx;
+			int ply;
+			int size;
+	    	boolean sameSpot = false;
+	    	ArrayList<platform> currList = new ArrayList<platform>();
+	    	if(z==1)
+	    	{
+	    		currList = platforms;
+	    	}
+	    	if(z==2)
+	    	{
+	    		currList = platforms2;
+	    	}
+	    	if(z==3)
+	    	{
+	    		currList = platforms3;
+	    	}
+	    	Random rand = new Random();
+	    	for(int i=0;i<40;i++)
+	    	{
+	    		plx = rand.nextInt(9000) + 500;
+	    		ply = rand.nextInt(250) + 150;
+	    		size = rand.nextInt(320) + 150;
+	    		for(platform p : currList)
+	    		{
+	    			Rectangle newRect = new Rectangle(plx,ply,size,555-ply);
+	    			Rectangle oldRect = new Rectangle(p.getX()-10,p.getY()-40,p.getSizeX()+20,p.getSizeY()+80);
+	    			if(newRect.intersects(oldRect))
+	    			{
+	    				sameSpot = true;
+	    			}	
+	    		}
+	    		if(sameSpot == false)
+	    		{
+	    			if(z==1)
+	    			{
+	    				platform plat = new platform(plx,ply,size,10,false);
+		    			platforms.add(plat);
+		    			platPics.add(platPic.getSubimage(0, 13, plat.getSizeX(), 545 - plat.getY()));
+		    			platTopPics.add(platPic.getSubimage(0, 0, plat.getSizeX(), 10));
+	    			}
+	    			if(z==2)
+	    			{
+	    				platform plat = new platform(plx,ply,size,10,false);
+		    			platforms2.add(plat);
+		    			//platPics.add(platPic.getSubimage(0, 13, plat.getSizeX(), 545 - plat.getY()));
+		    			//platTopPics.add(platPic.getSubimage(0, 0, plat.getSizeX(), 10));
+	    			}
+	    			if(z==3)
+	    			{
+	    				platform plat = new platform(plx,ply,size,10,false);
+		    			platforms3.add(plat);
+		    			//platPics.add(platPic.getSubimage(0, 13, plat.getSizeX(), 545 - plat.getY()));
+		    			//platTopPics.add(platPic.getSubimage(0, 0, plat.getSizeX(), 10));
+	    			}
+	    		}
+	    		else
+	    		{
+	    			sameSpot = false;
+	    		}
+	    	}
     	}
     }
     
     public void loadCoins()
     {
-    	int r;
-    	int x;
-    	int rground;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	
-    	//coins on platforms
-		for(platform p : platforms)
-		{
-			r = rand.nextInt(4);
-			if(r == 1) // 1 in 4 chance
+    	for(int z=1; z<4; z++)
+    	{
+    		int r;
+	    	int x;
+	    	int rground;
+	    	boolean sameSpot = false;
+	    	Random rand = new Random();
+	    	ArrayList<platform> currList = new ArrayList<platform>();
+	    	ArrayList<coin> currList2 = new ArrayList<coin>();
+	    	if(z==1)
+	    	{
+	    		currList = platforms;
+	    		currList2 = coins;
+	    	}
+	    	if(z==2)
+	    	{
+	    		currList = platforms2;
+	    		currList2 = coins2;
+	    	}
+	    	if(z==3)
+	    	{
+	    		currList = platforms3;
+	    		currList2 = coins3;
+	    	}
+	    	//coins on platforms
+			for(platform p : currList)
 			{
-				x = rand.nextInt(p.getSizeX() - 15);
-				coins.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
+				r = rand.nextInt(4);
+				if(r == 1) // 1 in 4 chance
+				{
+					x = rand.nextInt(p.getSizeX() - 15);
+					if(z==1)
+					{
+						coins.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
+					}
+					if(z==2)
+					{
+						coins2.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
+					}
+					if(z==3)
+					{
+						coins3.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
+					}
+				}
 			}
-		}
-		
-		//coins on ground
-		rground = rand.nextInt(10) + 5;
-		for(int i=0;i<rground;i++)
-		{
-			x = rand.nextInt(9000) + 500;
-    		for(coin c : coins)
-    		{
-    			Rectangle newRect = new Rectangle(x,555-30,15,25);
-    			Rectangle oldRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-    			if(newRect.intersects(oldRect))
-    			{
-					sameSpot = true;
-    			}
-    		}
-      		if(sameSpot == false)
-    		{
-    			coins.add(new coin(x,555-30,15,25,1,false));
-    		}
-    		else
-    		{
-    			sameSpot = false;
-    		}
-		}
-    }
-    
-    public void loadCoins2()
-    {
-    	int r;
-    	int x;
-    	int rground;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	
-    	//coins on platforms
-		for(platform p : platforms2)
-		{
-			r = rand.nextInt(4);
-			if(r == 1) // 1 in 4 chance
+			
+			//coins on ground
+			rground = rand.nextInt(10) + 5;
+			for(int i=0;i<rground;i++)
 			{
-				x = rand.nextInt(p.getSizeX() - 15);
-				coins2.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
+				x = rand.nextInt(9000) + 500;
+	    		for(coin c : currList2)
+	    		{
+	    			Rectangle newRect = new Rectangle(x,555-30,15,25);
+	    			Rectangle oldRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
+	    			if(newRect.intersects(oldRect))
+	    			{
+						sameSpot = true;
+	    			}
+	    		}
+	      		if(sameSpot == false)
+	    		{
+	    			if(z==1)
+	    			{
+	    				coins.add(new coin(x,555-30,15,25,1,false));
+	    			}
+	    			if(z==2)
+	    			{
+	    				coins2.add(new coin(x,555-30,15,25,1,false));
+	    			}
+	    			if(z==3)
+	    			{
+	    				coins3.add(new coin(x,555-30,15,25,1,false));
+	    			}
+	    		}
+	    		else
+	    		{
+	    			sameSpot = false;
+	    		}
 			}
-		}
-		
-		//coins on ground
-		rground = rand.nextInt(10) + 5;
-		for(int i=0;i<rground;i++)
-		{
-			x = rand.nextInt(9000) + 500;
-    		for(coin c : coins2)
-    		{
-    			Rectangle newRect = new Rectangle(x,555-30,15,25);
-    			Rectangle oldRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-    			if(newRect.intersects(oldRect))
-    			{
-					sameSpot = true;
-    			}
-    		}
-      		if(sameSpot == false)
-    		{
-    			coins2.add(new coin(x,555-30,15,25,1,false));
-    		}
-    		else
-    		{
-    			sameSpot = false;
-    		}
-		}
+    	}
     }
     
     public void loadGoombas()
     {
-    	int r;
-    	int x;
-    	int rground;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	
-		for(platform p : platforms)
-		{
-			if(p.getSomethingOn() == false)
+    	for(int z=1; z<4; z++)
+    	{
+    		int r;
+	    	int x;
+	    	int rground;
+	    	boolean sameSpot = false;
+	    	Random rand = new Random();
+	    	ArrayList<platform> currList = new ArrayList<platform>();
+	    	ArrayList<goomba> currList2 = new ArrayList<goomba>();
+	    	if(z==1)
+	    	{
+	    		currList = platforms;
+	    		currList2 = goombas;
+	    	}
+	    	if(z==2)
+	    	{
+	    		currList = platforms2;
+	    		currList2 = goombas2;
+	    	}
+	    	if(z==3)
+	    	{
+	    		currList = platforms3;
+	    		currList2 = goombas3;
+	    	}
+			for(platform p : currList)
 			{
-				r = rand.nextInt(3);
-				if(r == 1)
+				if(p.getSomethingOn() == false)
 				{
-					x = rand.nextInt(p.getSizeX() - 40);
-					goombas.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
-					p.setSomethingOn(true);
-				}	
+					r = rand.nextInt(4);
+					if(r == 1)
+					{
+						x = rand.nextInt(p.getSizeX() - 40);
+						if(z==1)
+						{
+							goombas.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));	
+						}
+						if(z==2)
+						{
+							goombas2.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));	
+						}
+						if(z==3)
+						{
+							goombas3.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));	
+						}
+						p.setSomethingOn(true);
+					}	
+				}
 			}
-		}
-		
-		rground = rand.nextInt(8)+2;
-		for(int i=0;i<rground;i++)
-		{
-			x = rand.nextInt(9000) + 500;
-    		for(goomba g : goombas)
-    		{
-    			Rectangle newRect = new Rectangle(x,555-25,10,20);
-    			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
-    			if(newRect.intersects(oldRect))
-    			{
-					sameSpot = true;
-    			}
-    		}
-      		if(sameSpot == false)
-    		{
-				goombas.add(new goomba(x,555-40,40,40,x,x+500,true,false,false));
-    		}
-    		else
-    		{
-    			sameSpot = false;
-    		}
-		}
-    }
-    
-    public void loadGoombas2()
-    {
-    	int r;
-    	int x;
-    	int rground;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	
-		for(platform p : platforms2)
-		{
-			if(p.getSomethingOn() == false)
+			
+			rground = rand.nextInt(8)+2;
+			for(int i=0;i<rground;i++)
 			{
-				r = rand.nextInt(3);
-				if(r == 1)
-				{
-					x = rand.nextInt(p.getSizeX() - 40);
-					goombas2.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
-					p.setSomethingOn(true);
-				}	
-			}
-		}
-		
-		rground = rand.nextInt(5)+2;
-		for(int i=0;i<rground;i++)
-		{
-			x = rand.nextInt(9000) + 500;
-    		for(goomba g : goombas2)
-    		{
-    			Rectangle newRect = new Rectangle(x,555-25,10,20);
-    			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
-    			if(newRect.intersects(oldRect))
-    			{
-					sameSpot = true;
-    			}
-    		}
-      		if(sameSpot == false)
-    		{
-				goombas2.add(new goomba(x,555-40,40,40,x,x+500,true,false,false));
-    		}
-    		else
-    		{
-    			sameSpot = false;
-    		}
-		}
+				x = rand.nextInt(9000) + 500;
+	    		for(goomba g : currList2)
+	    		{
+	    			Rectangle newRect = new Rectangle(x,555-25,10,20);
+	    			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
+	    			if(newRect.intersects(oldRect))
+	    			{
+						sameSpot = true;
+	    			}
+	    		}
+	      		if(sameSpot == false)
+	    		{
+	    			if(z==1)
+	    			{
+	    				goombas.add(new goomba(x,555-40,40,40,x,x+500,true,false,false));
+	    			}
+	    			if(z==1)
+	    			{
+	    				goombas2.add(new goomba(x,555-40,40,40,x,x+500,true,false,false));
+	    			}
+	    			if(z==3)
+	    			{
+	    				goombas3.add(new goomba(x,555-40,40,40,x,x+500,true,false,false));
+	    			}
+	    		}
+	    		else
+	    		{
+	    			sameSpot = false;
+	    		}
+			}	
+    	}
     }
     
     public void loadSpinys()
     {
-    	int r;
-    	int x;
-    	int rground;
+    	for(int z=2; z<4; z++)
+    	{
+    		int r;
+	    	int x;
+	    	int rground;
+	    	boolean sameSpot = false;
+	    	Random rand = new Random();
+	    	ArrayList<platform> currList = new ArrayList<platform>();
+	    	ArrayList<spiny> currList2 = new ArrayList<spiny>();
+	    	ArrayList<goomba> currList3 = new ArrayList<goomba>();
+	    	if(z==2)
+	    	{
+	    		currList = platforms2;
+	    		currList2 = spinys;
+	    		currList3 = goombas2;
+	    	}
+	    	if(z==3)
+	    	{
+	    		currList = platforms3;
+	    		currList2 = spinys2;
+	    		currList3 = goombas3;
+	    	}
+			for(platform p : currList)
+			{
+				if(p.getSomethingOn() == false)
+				{
+					r = rand.nextInt(3);
+					if(r == 1)
+					{
+						x = rand.nextInt(p.getSizeX() - 40);
+						if(z==2)
+						{
+							spinys.add(new spiny(p.getX() + x,p.getY() - 36,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
+						}
+						if(z==3)
+						{
+							spinys2.add(new spiny(p.getX() + x,p.getY() - 36,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
+						}
+						p.setSomethingOn(true);
+					}	
+				}
+			}
+			
+			rground = rand.nextInt(5)+2;
+			for(int i=0;i<rground;i++)
+			{
+				x = rand.nextInt(9000) + 500;
+	    		for(goomba g : currList3)
+	    		{
+	    			Rectangle newRect = new Rectangle(x,555-25,10,20);
+	    			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
+	    			if(newRect.intersects(oldRect))
+	    			{
+						sameSpot = true;
+	    			}
+	    		}
+	      		if(sameSpot == false)
+	    		{
+	    			if(z==2)
+	    			{
+	    				spinys.add(new spiny(x,555-40,40,40,x,x+500,true,false,false));
+	    			}
+					if(z==3)
+	    			{
+	    				spinys2.add(new spiny(x,555-40,40,40,x,x+500,true,false,false));
+	    			}
+	    		}
+	    		else
+	    		{
+	    			sameSpot = false;
+	    		}
+			}
+    	}
+    }
+    
+    public void loadBills()
+    {
+    	int r, x, rground;
     	boolean sameSpot = false;
     	Random rand = new Random();
-    	
-		for(platform p : platforms2)
+   		for(platform p : platforms3)
 		{
 			if(p.getSomethingOn() == false)
 			{
-				r = rand.nextInt(4);
+				r = rand.nextInt(2);
 				if(r == 1)
 				{
 					x = rand.nextInt(p.getSizeX() - 40);
-					spinys.add(new spiny(p.getX() + x,p.getY() - 36,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));
+					bills.add(new bulletBill(p.getX() + x,p.getY() - 55, p.getX()+x, p.getY() - 70, 70, 40, false));
 					p.setSomethingOn(true);
 				}	
 			}
@@ -1197,9 +1247,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		for(int i=0;i<rground;i++)
 		{
 			x = rand.nextInt(9000) + 500;
-    		for(goomba g : goombas2)
+    		for(goomba g : goombas3)
     		{
-    			Rectangle newRect = new Rectangle(x,555-25,10,20);
+    			Rectangle newRect = new Rectangle(x,555-25,50,20);
     			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
     			if(newRect.intersects(oldRect))
     			{
@@ -1208,7 +1258,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		}
       		if(sameSpot == false)
     		{
-				spinys.add(new spiny(x,555-40,40,40,x,x+500,true,false,false));
+				bills.add(new bulletBill(x,555-55, x, 555-70, 70, 40, false));
     		}
     		else
     		{
@@ -1219,96 +1269,147 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void loadBricks()
     {
-    	int x=0;
-    	int y=0;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	
-    	for(int i=0; i<30; i++)
+    	for(int z=1; z<4; z++)
     	{
-    		x = rand.nextInt(9000) + 500;
-    		y = 430;
-    		for(ArrayList<brick> b2: bricks)
-    		{
-    			for(brick b: b2)
-    			{
-    				int dx = b2.get(b2.size()-1).getX() + 40 - b2.get(0).getX();
-    				Rectangle brickSegment = new Rectangle(b2.get(0).getX(), b2.get(0).getY(), dx, 40);
-    				
-    				Rectangle newRect0 = new Rectangle(x-40,y,40,40);
-    				Rectangle newRect = new Rectangle(x,y,40,40);
-    				Rectangle newRect1 = new Rectangle(x+40, y, 40, 40);
-    				Rectangle newRect2 = new Rectangle(x+80, y, 40, 40);
-    				Rectangle newRect3 = new Rectangle(x+120, y, 40, 40);
-    				Rectangle newRect4 = new Rectangle(x+160, y, 40, 40);
-    				Rectangle newRect5 = new Rectangle(x+200, y, 40, 40);
-	    			
-	    			if(newRect0.intersects(brickSegment) || newRect.intersects(brickSegment) || newRect1.intersects(brickSegment) || newRect2.intersects(brickSegment) || newRect3.intersects(brickSegment) || newRect4.intersects(brickSegment) || newRect5.intersects(brickSegment))
+    		int x=0;
+	    	int y=0;
+	    	boolean sameSpot = false;
+	    	Random rand = new Random();
+	    	ArrayList<ArrayList<brick>> currList = new ArrayList<ArrayList<brick>>();
+	    	if(z==1)
+	    	{
+	    		currList = bricks;
+	    	}
+	    	if(z==2)
+	    	{
+	    		currList = bricks2;
+	    	}
+	    	if(z==3)
+	    	{
+	    		currList = bricks3;
+	    	}
+	    	for(int i=0; i<30; i++)
+	    	{
+	    		x = rand.nextInt(9000) + 500;
+	    		y = 430;
+	    		for(ArrayList<brick> b2: currList)
+	    		{
+	    			for(brick b: b2)
 	    			{
-	    				sameSpot = true;
-    				}
-    			}    			
-    		}
-    		if(!sameSpot)
-    		{	
-    			int randInt = rand.nextInt(4) + 2;
-    			ArrayList<brick> tmp = new ArrayList<brick>();
-    			for(int z=0; z<randInt; z++)
-    			{
-    				tmp.add(new brick(x+z*40, y, 40, 40));
-    			}
-    			bricks.add(tmp);
-    			if(tmp.size()==3)
-    			{
-    				tmp.get(1).setQuestion(true);
-    			}
-    			if(tmp.size()==5)
-    			{
-    				tmp.get(2).setQuestion(true);
-    			}
-    		}
-    		else
-    		{	
-    			sameSpot = false;
-    		}
+	    				int dx = b2.get(b2.size()-1).getX() + 40 - b2.get(0).getX();
+	    				Rectangle brickSegment = new Rectangle(b2.get(0).getX(), b2.get(0).getY(), dx, 40);
+	    				
+	    				Rectangle newRect0 = new Rectangle(x-40,y,40,40);
+	    				Rectangle newRect = new Rectangle(x,y,40,40);
+	    				Rectangle newRect1 = new Rectangle(x+40, y, 40, 40);
+	    				Rectangle newRect2 = new Rectangle(x+80, y, 40, 40);
+	    				Rectangle newRect3 = new Rectangle(x+120, y, 40, 40);
+	    				Rectangle newRect4 = new Rectangle(x+160, y, 40, 40);
+	    				Rectangle newRect5 = new Rectangle(x+200, y, 40, 40);
+		    			
+		    			if(newRect0.intersects(brickSegment) || newRect.intersects(brickSegment) || newRect1.intersects(brickSegment) || newRect2.intersects(brickSegment) || newRect3.intersects(brickSegment) || newRect4.intersects(brickSegment) || newRect5.intersects(brickSegment))
+		    			{
+		    				sameSpot = true;
+	    				}
+	    			}    			
+	    		}
+	    		if(!sameSpot)
+	    		{	
+	    			int randInt = rand.nextInt(4) + 2; 
+	    			ArrayList<brick> tmp = new ArrayList<brick>();
+	    			for(int n=0; n<randInt; n++)
+	    			{
+	    				tmp.add(new brick(x+n*40, y, 40, 40)); //this will generate a brick segment between 2-5 bricks long, each being 40 by 40
+	    			}
+	    			if(z==1)
+	    			{
+	    				bricks.add(tmp);
+	    			}
+	    			if(z==2)
+	    			{
+	    				bricks2.add(tmp);
+	    			}
+	    			if(z==3)
+	    			{
+	    				bricks3.add(tmp);
+	    			} 
+	    			if(tmp.size()==3) //if the the brick segment is 3 or 5 bricks long, it will include a question block directly in the middle
+	    			{
+	    				tmp.get(1).setQuestion(true);
+	    			}
+	    			if(tmp.size()==5)
+	    			{
+	    				tmp.get(2).setQuestion(true);
+	    			}
+	    		}
+	    		else
+	    		{	
+	    			sameSpot = false;
+	    		}
+	    	}
     	}
     }
     
     public void loadMushrooms()
     {
-    	int r;
-    	int x;
-    	int rground;
-    	boolean sameSpot = false;
-    	Random rand = new Random();
-    	
-		for(platform p : platforms)
-		{
-			if(p.getSomethingOn() == false)
+    	for(int z=1; z<4; z++)
+    	{
+    		int r;
+	    	int x;
+	    	int rground;
+	    	boolean sameSpot = false;
+	    	Random rand = new Random();
+	    	ArrayList<platform> currList = new ArrayList<platform>();
+	    	if(z==1)
+	    	{
+	    		currList = platforms;
+	    	}
+	    	if(z==2)
+	    	{
+	    		currList = platforms2;
+	    	}
+	    	if(z==3)
+	    	{
+	    		currList = platforms3;
+	    	}
+	    		
+			for(platform p : currList)
 			{
-				r = rand.nextInt(12);
-				if(r == 1)
+				if(p.getSomethingOn() == false)
 				{
-					x = rand.nextInt(p.getSizeX() - 30);
-					mushrooms.add(new mushroom(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,false,false,true));
-					p.setSomethingOn(true);
-				}	
-			}
-		}
+					r = rand.nextInt(12);
+					if(r == 1)
+					{
+						x = rand.nextInt(p.getSizeX() - 30);
+						if(z==1)
+						{
+							mushrooms.add(new mushroom(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,false,false,true));
+						}
+						if(z==2)
+						{
+							mushrooms2.add(new mushroom(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,false,false,true));
+						}
+						if(z==3)
+						{
+							mushrooms3.add(new mushroom(p.getX() + x,p.getY() - 30,30,30,p.getX(),p.getX()+p.getSizeX()-30,false,false,true));
+						}
+						p.setSomethingOn(true);	
+					}
+				}
+    		}
+    	}
     }
     
     public void checkBrickCollide()
     {
-    	for(ArrayList<brick> b2: bricks)
+    	for(ArrayList<brick> b2: currBricks)
     	{
     		for(brick b: b2)
     		{
     			Rectangle bLeft = new Rectangle(b2.get(0).getX(), b2.get(0).getY()+1,1,38); //left side of the brick segment
     			Rectangle bRight = new Rectangle(b2.get(b2.size()-1).getX()+40, b2.get(b2.size()-1).getY()+1,1,38); //right side of the brick segment
     			
-    			Rectangle brickBot = new Rectangle(b.getX()+2,b.getY()+40,36,1);
-		    	//Rectangle brickLeft = new Rectangle(b.getX(),b.getY(),1,39);
-		    	//Rectangle brickRight = new Rectangle(b.getX()+40,b.getY(),1,39);
+    			Rectangle brickBot = new Rectangle(b.getX()+2,b.getY()+40,36,1);;
 		    	Rectangle brickTop = new Rectangle(b.getX(),b.getY(),40, 1);
 		    	
 		    	Rectangle marioBot = new Rectangle(mario.getX(),mario.getY()+mario.getHeight(),mario.getWidth(),10);
@@ -1355,7 +1456,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			        }
 			        else if(brickTop.intersects(guy))
 			        {
-			        	System.out.println(true+"1");
 			        	mario.setY(b.getY()-mario.getHeight());
 			        	mario.setVY(0);
 			        	mario.setJump(false);
@@ -1372,214 +1472,168 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
     public void checkPlatformCollide()
     {
-    	if(screen == "level1")
+    	boolean onPlatform = false;
+    	for(platform p : currPlatforms)
     	{
-	    	boolean onPlatform = false;
-	    	for(platform p : platforms)
-	    	{
-				Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+mario.getHeight(),mario.getWidth()+10,20); //player has 10 pixel clearance for x position
-				Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
-				if(mario.getVY() >= 0 && mario.getJump() == true)
-				{
-		    		if(m.intersects(plat))
-		    		{
-		    			onPlatform = true;
-						mario.setY(p.getY()-mario.getHeight());
-						mario.setVY(0);
-						mario.setJump(false);
-		    		}
-				}	
-	    	}
-	    	if(onPlatform == false && mario.getY() != ground)
-	    	{
-	    		mario.setJump(true);
-	    	}	
+			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+mario.getHeight(),mario.getWidth()+10,20); //player has 10 pixel clearance for x position
+			Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
+			if(mario.getVY() >= 0 && mario.getJump() == true)
+			{
+	    		if(m.intersects(plat))
+	    		{
+	    			onPlatform = true;
+					mario.setY(p.getY()-mario.getHeight());
+					mario.setVY(0);
+					mario.setJump(false);
+	    		}
+			}	
     	}
-    	if(screen == "level2")
+    	if(onPlatform == false && mario.getY() != ground)
     	{
-	    	boolean onPlatform = false;
-	    	for(platform p : platforms2)
-	    	{
-				Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+mario.getHeight(),mario.getWidth()+10,20); //player has 10 pixel clearance for x position
-				Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
-				if(mario.getVY() >= 0 && mario.getJump() == true)
-				{
-		    		if(m.intersects(plat))
-		    		{
-		    			onPlatform = true;
-						mario.setY(p.getY()-mario.getHeight());
-						mario.setVY(0);
-						mario.setJump(false);
-		    		}
-				}	
-	    	}
-	    	if(onPlatform == false && mario.getY() != ground)
-	    	{
-	    		mario.setJump(true);
-	    	}	
-    	}
+    		mario.setJump(true);
+    	}	
     }
     
     public void checkCoinCollide()
     {
-    	if(screen == "level1")
-    	{
-	    	for(coin c : coins)
-	    	{
-				Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-				Rectangle coinRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-	    		if(m.intersects(coinRect))
-	    		{
-	    			c.setCollected(true);
-	    		}
-	    	}	
-    	}
-    	if(screen == "level2")
-    	{
-	    	for(coin c : coins2)
-	    	{
-				Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-				Rectangle coinRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
-	    		if(m.intersects(coinRect))
-	    		{
-	    			c.setCollected(true);
-	    		}
-	    	}	
-    	}
+		for(coin c : currCoins)
+		{
+			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+			Rectangle coinRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
+			if(m.intersects(coinRect))
+			{
+				c.setCollected(true);
+			}
+		}	
     }
     
     public void checkGoombaCollide()
     {
-    	if(screen == "level1")
+
+    	for(goomba g : currGoombas)
     	{
-	    	for(goomba g : goombas)
-	    	{
-				Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-				Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
-				Rectangle goombaRect = new Rectangle(g.getX(),g.getY(),g.getSizeX(),g.getSizeY());
-	    		if(m.intersects(goombaRect))
-	    		{
-	    			if(g.getKilled()==false)
-	    			{
-	    				if(mario.getVY() >= 2)
-	    				{
-	    					g.setKilled(true);
-	    					mario.setVY(-10);
-	    				}
-	    				else
-	    				{
-		    				if(marioBig && !invE) //if mario is big mario or he is not in the animation of growing into big mario
-		    				{
-		    					shrink();
-	    					}
-	    					else if(invincible == false)
-	    					{
-		    					lives -= 1;
-								inv = true;
-	    					}
-	    				}
-	    			}
-	    		}
-	    		else if(f.intersects(goombaRect))
-	    		{
-	    			if(g.getKilled()==false)
-	    			{
-	    				if(fball.getUsed() == true)
-	    				{
-	        				g.setKilled(true);
-	    				}
-	    			}
-	    		}
-	    	}
-    	}
-    	if(screen == "level2")
-    	{
-	    	for(goomba g : goombas2)
-	    	{
-				Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-				Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
-				Rectangle goombaRect = new Rectangle(g.getX(),g.getY(),g.getSizeX(),g.getSizeY());
-	    		if(m.intersects(goombaRect))
-	    		{
-	    			if(g.getKilled()==false)
-	    			{
-	    				if(mario.getVY() >= 2)
-	    				{
-	    					g.setKilled(true);
-	    					mario.setVY(-10);
-	    				}
-	    				else
-	    				{
-		    				if(marioBig)
-		    				{
-		    					shrink();
-		    					getTmp();
-	    					}
-	    					else if(invincible == false)
-	    					{
-		    					lives -= 1;
-								inv = true;
-	    					}
-	    				}
-	    			}
-	    		}
-	    		else if(f.intersects(goombaRect))
-	    		{
-	    			if(g.getKilled()==false)
-	    			{
-	    				if(fball.getUsed() == true)
-	    				{
-	        				g.setKilled(true);
-	    				}
-	    			}
-	    		}
-	    	}
-    	}
-    }
-    
- 
-    public void checkSpinyCollide()
-    {
-    	if(screen == "level2")
-    	{
-	    	for(spiny s : spinys)
-	    	{
-				Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-				Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
-				Rectangle spinyRect = new Rectangle(s.getX(),s.getY(),s.getSizeX(),s.getSizeY());
-	    		if(m.intersects(spinyRect))
-	    		{
-	    			if(s.getKilled()==false)
-	    			{
-	    				if(marioBig && !invE)
+			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+			Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
+			Rectangle goombaRect = new Rectangle(g.getX(),g.getY(),g.getSizeX(),g.getSizeY());
+    		if(m.intersects(goombaRect))
+    		{
+    			if(g.getKilled()==false)
+    			{
+    				if(mario.getVY() >= 2)
+    				{
+    					g.setKilled(true);
+    					mario.setVY(-10);
+    				}
+    				else
+    				{
+	    				if(marioBig && !invE) //if mario is big mario or he is not in the animation of growing into big mario
 	    				{
 	    					shrink();
-	    					getTmp();
     					}
     					else if(invincible == false)
     					{
 	    					lives -= 1;
 							inv = true;
     					}
-	    			}
-	    		}
-	    		else if(f.intersects(spinyRect))
-	    		{
-	    			if(s.getKilled()==false)
-	    			{
-	    				if(fball.getUsed() == true)
-	    				{
-	        				s.setKilled(true);
-	    				}
-	    			}
-	    		}
-	    	}
+    				}
+    			}
+    		}
+    		else if(f.intersects(goombaRect))
+    		{
+    			if(g.getKilled()==false)
+    			{
+    				if(fball.getUsed() == true)
+    				{
+        				g.setKilled(true);
+    				}
+    			}
+    		}
+    	}
+    }
+ 
+    public void checkSpinyCollide()
+    {
+    	for(spiny s : currSpinys)
+    	{
+			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+			Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
+			Rectangle spinyRect = new Rectangle(s.getX(),s.getY(),s.getSizeX(),s.getSizeY());
+    		if(m.intersects(spinyRect))
+    		{
+    			if(s.getKilled()==false)
+    			{
+    				if(marioBig && !invE)
+    				{
+    					shrink();
+    					getTmp();
+					}
+					else if(invincible == false)
+					{
+    					lives -= 1;
+						inv = true;
+					}
+    			}
+    		}
+    		else if(f.intersects(spinyRect))
+    		{
+    			if(s.getKilled()==false)
+    			{
+    				if(fball.getUsed() == true)
+    				{
+        				s.setKilled(true);
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    public void checkBillCollide()
+    {
+    	System.out.println(currBills.size());
+    	for(bulletBill bb: currBills)
+    	{
+    		Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+			Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
+			Rectangle billRect = new Rectangle(bb.getX(),bb.getY(),bb.getSizeX(),bb.getSizeY());
+			
+    		if(m.intersects(billRect))
+    		{
+    			System.out.println(true);
+    			if(bb.getKilled()==false)
+    			{
+    				if(mario.getVY() >= 2)
+    				{
+    					bb.setKilled(true);
+    					mario.setVY(-10);
+    				}
+    				else if(marioBig && !invE)
+    				{
+    					shrink();
+    					getTmp();
+					}
+					else if(invincible == false)
+					{
+    					lives -= 1;
+						inv = true;
+					}
+    			}
+    		}
+    		else if(f.intersects(billRect))
+    		{
+    			if(bb.getKilled()==false)
+    			{
+    				if(fball.getUsed() == true)
+    				{
+        				bb.setKilled(true);
+    				}
+    			}
+    		}
     	}
     }
     
     public void checkMushroomCollide()
     {
-    	for(mushroom mu : mushrooms)
+    	for(mushroom mu : currMushrooms)
     	{
 			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
 			Rectangle goombaRect = new Rectangle(mu.getX(),mu.getY(),mu.getSizeX(),mu.getSizeY());
@@ -1596,7 +1650,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void checkShroomCollide()
     {
-    	for(marioShroom mushroom: marioMushrooms)
+    	for(marioShroom mushroom: currMarioMushrooms)
     	{
 			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
     		Rectangle shroom = new Rectangle(mushroom.getX(),mushroom.getY(),40,40);
@@ -1614,6 +1668,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		}
     	}
     }
+    
+    
 	
     public void keyTyped(KeyEvent e) {}
 
@@ -1641,30 +1697,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{
 				frames = 0;
 				screen = "level1";
-			}
-			if(menuInstructions.contains(mouse))
-			{
-				frames = 0;
-				screen = "instructions";
-			}
-			if(menuCredits.contains(mouse))
-			{
-				frames = 0;
-				screen = "credits";
-			}
-		}
-		if(screen == "instructions")
-		{
-			if(storePrev.contains(mouse))
-			{
-				screen = "menu";
-			}
-		}
-		if(screen == "credits")
-		{
-			if(storePrev.contains(mouse))
-			{
-				screen = "menu";
 			}
 		}
 		if(screen == "intermission")
@@ -1740,35 +1772,14 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 	    	g.drawImage(menuback,0,0,null);
     		g.setColor(Color.blue);
-	    	//g.fillRect(menuPlay.x,menuPlay.y,menuPlay.width,menuPlay.height);
-	    	g.drawImage(startbtn,menuPlay.x,menuPlay.y,null);
-	    	//g.fillRect(menuInstructions.x,menuInstructions.y,menuInstructions.width,menuInstructions.height);
-	    	g.drawImage(instructionsbtn,menuInstructions.x,menuInstructions.y,null);
-	    	//g.fillRect(menuCredits.x,menuCredits.y,menuCredits.width,menuCredits.height);
-	    	g.drawImage(creditsbtn,menuCredits.x,menuCredits.y,null);
-    	}
-    	if(screen == "instructions")
-    	{
-	    	g.drawImage(menuinstructions,0,0,null);
-    		g.setColor(Color.blue);
-	    	//g.fillRect(storePrev.x,storePrev.y,storePrev.width,storePrev.height);
-	    	g.drawImage(backbtn,storePrev.x,storePrev.y,null);
-    	}
-    	if(screen == "credits")
-    	{
-	    	g.drawImage(menucredits,0,0,null);
-    		g.setColor(Color.blue);
-	    	//g.fillRect(storePrev.x,storePrev.y,storePrev.width,storePrev.height);
-	    	g.drawImage(backbtn,storePrev.x,storePrev.y,null);
+	    	g.fillRect(menuPlay.x,menuPlay.y,menuPlay.width,menuPlay.height);
     	}
     	if(screen == "intermission")
     	{
 	    	g.drawImage(intermissionback,0,0,null);
     		g.setColor(Color.blue);
-	    	//g.fillRect(intermissionNext.x,intermissionNext.y,intermissionNext.width,intermissionNext.height);
-	    	g.drawImage(nextbtn,intermissionNext.x,intermissionNext.y,null);
-	    	//g.fillRect(intermissionStore.x,intermissionStore.y,intermissionStore.width,intermissionStore.height);
-	    	g.drawImage(storebtn,intermissionStore.x,intermissionStore.y,null);
+	    	g.fillRect(intermissionNext.x,intermissionNext.y,intermissionNext.width,intermissionNext.height);
+	    	g.fillRect(intermissionStore.x,intermissionStore.y,intermissionStore.width,intermissionStore.height);
     	}
     	if(screen == "intermission2")
     	{
@@ -1781,8 +1792,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 	    	g.drawImage(storeback,0,0,null);
     		g.setColor(Color.blue);
-	    	//g.fillRect(storePrev.x,storePrev.y,storePrev.width,storePrev.height);
-	    	g.drawImage(backbtn,storePrev.x,storePrev.y,null);
+	    	g.fillRect(storePrev.x,storePrev.y,storePrev.width,storePrev.height);
 			g.setColor(Color.white);
 			g.drawImage(lifeIconPic, 5, 7, null); 
 			g.drawImage(coinIconPic, 10, 40, null);
@@ -1798,41 +1808,31 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			g.drawString("x"+Integer.toString(lives), 37, 35);
 			g.drawString(Integer.toString(totalCoins), 33, 69);
     	}
-    	if(screen == "level1")
+    	else
     	{
-	    	Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
-	    	g.drawImage(back,backX,0,null);
-	    	//g.drawRect(marioRect.x, marioRect.y, marioRect.width, marioRect.height);
-			for(platform p : platforms)
+    		Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
+    		g.drawImage(currBack,currBackX,0,null);
+    		
+    		for(platform p : currPlatforms)
 			{
-				/*Color platBottomColor = new Color(213,132,22);
+				Color platBottomColor = new Color(213,132,22);
 				g.setColor(platBottomColor);  
-				g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),545 - p.getY());*/
-				//platBack = platBack.getScaledInstance(p.getSizeX(), 545 - p.getY(), Image.SCALE_SMOOTH);
-				//g.drawImage(, p.getX(), p.getY()+10, null);
+				g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),545 - p.getY());
 			}
-			for(int i=0; i< platforms.size(); i++)
-			{
-				g.drawImage(platPics.get(i), platforms.get(i).getX(), platforms.get(i).getY()+10, null);
-			}
-			for(int i=0; i<platforms.size(); i++)
-			{
-				g.drawImage(platTopPics.get(i), platforms.get(i).getX(), platforms.get(i).getY(), null);
-			}
-			/*for(platform p : platforms)	
+			for(platform p : currPlatforms)	
 			{
 				Color platTopColor = new Color(67,144,0);
 				g.setColor(platTopColor);  
 				g.fillRect(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
-			}*/
-			for(coin c : coins)
+			}
+			for(coin c : currCoins)
 			{
 				if(c.getCollected() == false)
 				{
 					g.drawImage(coinPic, c.getX(), c.getY(), null);
 				}
 			}
-			for(ArrayList<brick> b2: bricks)
+			for(ArrayList<brick> b2: currBricks)
 			{
 				for(int i=0; i<b2.size(); i++)
 				{
@@ -1850,13 +1850,30 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 							g.drawImage(questionPic,b2.get(i).getX(),b2.get(i).getY()-15,null);
 							if(!b2.get(i).getShroom())
 							{
-								marioMushrooms.add(new marioShroom(b2.get(i).getX(), b2.get(i).getY()-45, 0));
-								currBrick = b2;
+								if(screen == "level1")
+								{
+									marioMushrooms.add(new marioShroom(b2.get(i).getX(), b2.get(i).getY()-45, 0));	
+								}
+								if(screen == "level2")
+								{
+									marioMushrooms2.add(new marioShroom(b2.get(i).getX(), b2.get(i).getY()-45, 0));	
+								}
+								if(screen == "level3")
+								{
+									marioMushrooms3.add(new marioShroom(b2.get(i).getX(), b2.get(i).getY()-45, 0));	
+								}
+								for(brick b: b2)
+								{
+									if(!b.getBroken())
+									{
+										currBrick.add(b);
+									}
+								}
 								b2.get(i).setShroom(true);
 							}	
 						}
 						
-						/*if(i==1 && b2.size()==3) //3 brick segments
+						if(i==1 && b2.size()==3) //3 brick segments
 						{
 							g.drawImage(questionPic,b2.get(1).getX(),b2.get(1).getY()-15,null);
 							if(!b2.get(i).getShroom())
@@ -1875,17 +1892,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 								currBrick = b2;
 								b2.get(i).setShroom(true);
 							}
-						}*/
+						}
 					}
 					if(b2.get(i).getBroken()) //if mario is big and he collides with the bottom of a normal brick, he breaks it instead
 					{
 						if(b2.get(i).getY()<555)
-						{
+						{  
 							g.drawImage(brickSegments[0], b2.get(i).getX()-b2.get(i).getVX(), b2.get(i).getY(), null); //top left piece
 							g.drawImage(brickSegments[1], b2.get(i).getX()+20+b2.get(i).getVX(), b2.get(i).getY(), null); //top right piece
 							g.drawImage(brickSegments[2], b2.get(i).getX()-b2.get(i).getVX(), b2.get(i).getY()+20, null); //bottom left piece 
 							g.drawImage(brickSegments[3], b2.get(i).getX()+20+b2.get(i).getVX(), b2.get(i).getY()+20, null); //bottom right piece
-							b2.get(i).addY(b2.get(i).getVY());
+							b2.get(i).addY(b2.get(i).getVY()); //basically making the brick pieces "jump" 
 							b2.get(i).addVY(1); 
 							b2.get(i).addVX(1);
 						}
@@ -1898,19 +1915,18 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 							g.drawImage(questionPic,b2.get(i).getX(),b2.get(i).getY(),null);
 						}
 						
-						/*if(i==1 && b2.size()==3)
+						if(i==1 && b2.size()==3)
 						{
 							g.drawImage(questionPic,b2.get(1).getX(),b2.get(1).getY(),null);
 						}
 						if(i==2 && b2.size()==5)
 						{
 							g.drawImage(questionPic,b2.get(2).getX(),b2.get(2).getY(),null);
-						}*/
+						}
 					}
 				}
 			}
-			
-			for(marioShroom mushroom : marioMushrooms)
+			for(marioShroom mushroom : currMarioMushrooms)
 	    	{
 	    		if(mushroom.getCond())
 	    		{
@@ -1933,8 +1949,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 					mushroom.addY(mushroom.getVY());
     		}
-    		
-			for(goomba gb : goombas)
+    		for(goomba gb : currGoombas)
 			{
 				if(gb.getKilled() == false)
 				{
@@ -1971,12 +1986,11 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 							g.drawImage(gb.getDeadImage(1),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
 							gb.setKillTimer(gb.getKillTimer()+1);
 						}
-	
 					}
 				}	
 			}
 	
-			for(mushroom m : mushrooms)
+			for(mushroom m : currMushrooms)
 			{
 				if(m.getCollected() == false)
 				{
@@ -1995,91 +2009,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					g.drawImage(fireballRPic, fball.getX(), fball.getY(), null);
 				}
 			}
-			
-			
-			g.setColor(Color.white);
-			g.drawImage(lifeIconPic, 5, 7, null); 
-			g.drawImage(coinIconPic, 10, 40, null);
-			if(marioBig == true)
-			{
-				g.drawImage(marioShroomIconPic, 10, 73, null);
-			}
-			if(fireflowerPower == true)
-			{
-				g.drawImage(fireFlowerIconPic, 40, 73, null);
-			}
-			g.setFont(marioFont);
-			g.drawString("x"+Integer.toString(lives), 37, 35);
-			g.drawString(Integer.toString(collectedCoins), 33, 69);
-			
-			Rectangle mRect = new Rectangle(mario.getX()-5,mario.getY()+mario.getHeight(),mario.getWidth()+10,10);
-    	}
-    	if(screen == "level2")
-    	{
-	    	Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
-	    	g.drawImage(back2,backX2,0,null);
-			for(platform p : platforms2)
-			{
-				Color platBottomColor = new Color(216,192,96);
-				g.setColor(platBottomColor);  
-				g.fillRect(p.getX(),p.getY()+10,p.getSizeX(),565 - p.getY());
-			}
-			for(platform p : platforms2)
-			{
-				Color platTopColor = new Color(150,127,54);
-				g.setColor(platTopColor);  
-				g.fillRect(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
-			}
-			for(coin c : coins2)
-			{
-				if(c.getCollected() == false)
-				{
-					g.drawImage(coinPic, c.getX(), c.getY(), null);
-				}
-			}
-			for(goomba gb : goombas2)
-			{
-				if(gb.getKilled() == false)
-				{
-					if(gb.getRight())
-					{
-						g.drawImage(gb.getRightImage(),gb.getX(),gb.getY(),null);
-					}
-					if(gb.getLeft())
-					{
-						g.drawImage(gb.getLeftImage(),gb.getX(),gb.getY(),null);
-					}
-					gb.addFrames(1);
-					if(gb.getFrames()==30)
-					{
-						gb.addFrames(-gb.getFrames()); // reset frames
-					}
-				}
-
-				if(gb.getKilled())
-				{
-					if(gb.getLeft())
-					{ 
-						if(gb.getKillTimer()<=10) // dead goomba appears for a bit
-						{
-							g.drawImage(gb.getDeadImage(0),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
-							gb.setKillTimer(gb.getKillTimer()+1);
-						}
-	
-					}
-					if(gb.getRight())
-					{ 
-						if(gb.getKillTimer()<=10)
-						{
-							g.drawImage(gb.getDeadImage(1),gb.getX(),gb.getY()+gb.getSizeY()/2,null);
-							gb.setKillTimer(gb.getKillTimer()+1);
-						}
-	
-					}
-				}	
-			}
-			
-			for(spiny s : spinys)
+			for(spiny s : currSpinys)
 			{	
 				if(!s.getKilled())
 				{
@@ -2106,74 +2036,36 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
 					}
 				}
-				g.drawRect(s.getX(), s.getY(), s.getSizeX(), s.getSizeY());
-			}
-			
-			if(fball.getUsed() == true)
-			{
-				if(fball.getLeft() == true)
+				Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
+				g.drawRect(m.x,m.y,m.width,m.height);
+				for(bulletBill bb : currBills)
 				{
-					g.drawImage(fireballLPic, fball.getX(), fball.getY(), null);
-				}
-				else
-				{
-					g.drawImage(fireballRPic, fball.getX(), fball.getY(), null);
-				}
-			}
+					if(bb.getKilled())
+					{
+						if(bb.getY()<555)
+						{
+							bb.addY(2);
+							bb.draw(g);
+						}
+					}
 
-			
-			g.setColor(Color.white);
-			g.drawImage(lifeIconPic, 5, 7, null); 
-			g.drawImage(coinIconPic, 10, 40, null);
-			if(marioBig == true)
-			{
-				g.drawImage(marioShroomIconPic, 10, 73, null);
-			}
-			if(fireflowerPower == true)
-			{
-				g.drawImage(fireFlowerIconPic, 40, 73, null);
-			}
-			g.setFont(marioFont);
-			g.drawString("x"+Integer.toString(lives), 37, 35);
-			g.drawString(Integer.toString(collectedCoins), 33, 69);
-    	}
-		if(screen == "level3")
-    	{
-	    	Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
-	    	g.drawImage(back3,backX3,0,null);
-			
-			if(fball.getUsed() == true)
-			{
-				if(fball.getLeft() == true)
-				{
-					g.drawImage(fireballLPic, fball.getX(), fball.getY(), null);
-				}
-				else
-				{
-					g.drawImage(fireballRPic, fball.getX(), fball.getY(), null);
+					if(bb.getCD() && !bb.getKilled())
+					{
+						bb.draw(g);	//drawing the bullet bills	
+					}
+					g.drawImage(bb.getImage(), bb.getBX(), bb.getBY(), null); //drawing blaster
+					if(Math.abs(bb.getX()-bb.getBX())>= 400)
+					{
+						bb.setCD(false);
+						bb.setX(bb.getBX()); //reset the bullet bill to its blaster
+						bb.setY(bb.getBY()+15);
+						bb.setKilled(false);
+					}
 				}
 			}
-
-			g.setColor(Color.white);
-			g.drawImage(lifeIconPic, 5, 7, null); 
-			g.drawImage(coinIconPic, 10, 40, null);
-			if(marioBig == true)
+			
+			if(collide) //when mario has hit a red mushroom or an enemy, he grows/shrinks
 			{
-				g.drawImage(marioShroomIconPic, 10, 73, null);
-			}
-			if(fireflowerPower == true)
-			{
-				g.drawImage(fireFlowerIconPic, 40, 73, null);
-			}
-			g.setFont(marioFont);
-			g.drawString("x"+Integer.toString(lives), 37, 35);
-			g.drawString(Integer.toString(collectedCoins), 33, 69);
-    	}
-    	if(screen == "level1" || screen == "level2" || screen == "level3")
-    	{
-    		if(collide) //when mario has hit a red mushroom or an enemy, he grows/shrinks
-			{
-				
 				if(marioBig) //mario grows
 				{
 					if(evolveCD<=25)
@@ -2341,6 +2233,21 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					frames=0;	
 				}
 			}
+			
+			g.setColor(Color.white);
+			g.drawImage(lifeIconPic, 5, 7, null); 
+			g.drawImage(coinIconPic, 10, 40, null);
+			if(marioBig == true)
+			{
+				g.drawImage(marioShroomIconPic, 10, 73, null);
+			}
+			if(fireflowerPower == true)
+			{
+				g.drawImage(fireFlowerIconPic, 40, 73, null);
+			}
+			g.setFont(marioFont);
+			g.drawString("x"+Integer.toString(lives), 37, 35);
+			g.drawString(Integer.toString(collectedCoins), 33, 69);
     	}
 	}
 }	
@@ -2886,41 +2793,41 @@ class fireball
 
 class brick
 {
-	private int x;
-	private int y;
+	private int X;
+	private int Y;
 	private int sizeX;
 	private int sizeY;
 	private boolean shroom = false;
 	private boolean broken = false; 
 	private boolean question = false;
-	private int vy,vx;
+	private int VY,VX;
 
-	public brick(int x1, int y1, int sizeX1, int sizeY1)
+	public brick(int X1, int Y1, int sizeX1, int sizeY1)
 	{
-		x = x1;
-		y = y1;
+		X = X1;
+		Y = Y1;
 		sizeX = sizeX1;
 		sizeY = sizeY1;
 	}
 	
 	public int getX()
 	{
-		return x;
+		return X;
 	}
 	
 	public int getY()
 	{
-		return y;
+		return Y;
 	}
 	
 	public int getVY()
 	{
-		return vy;
+		return VY;
 	}
 	
 	public int getVX()
 	{
-		return vx;
+		return VX;
 	}
 	
 	public boolean getShroom()
@@ -2940,32 +2847,32 @@ class brick
 	
 	public void addX(int n)
 	{
-		x += n;
+		X += n;
 	}
 	
 	public void addY(int n)
 	{
-		y += n;
+		Y += n;
 	}
 	
 	public void addVY(int n)
 	{
-		vy += n;
+		VY += n;
 	}
 	
 	public void addVX(int n)
 	{
-		vx += n;
+		VX += n;
 	}
 	
 	public void setVY(int n)
 	{
-		vy = n;
+		VY = n;
 	}
 	
 	public void setVX(int n)
 	{
-		vx = n;
+		VX = n;
 	}
 	
 	public void setShroom(boolean bool)
@@ -2986,34 +2893,34 @@ class brick
 
 class marioShroom
 {
-	private int x;
-	private int y;
-	private int vy;
+	private int X;
+	private int Y;
+	private int VY;
 	private Image shroomPic;
 	private boolean onGround = false;
 	private boolean cond = true;
 	
-	public marioShroom(int x1, int y1, int vy1)
+	public marioShroom(int X1, int Y1, int VY1)
 	{
-		x = x1;
-		y = y1;
-		vy = vy1;
+		X = X1;
+		Y = Y1;
+		VY = VY1;
 		shroomPic = new ImageIcon("Mariopics/redShroom.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
 	}
 	
 	public int getX()
 	{
-		return x;
+		return X;
 	}
 	
 	public int getY()
 	{
-		return y;
+		return Y;
 	}
 	
 	public int getVY()
 	{
-		return vy;
+		return VY;
 	}
 	
 	public boolean getGround()
@@ -3026,24 +2933,24 @@ class marioShroom
 		return cond;
 	}
 	
-	public void addX(int x1)
+	public void addX(int X1)
 	{
-		x += x1;
+		X += X1;
 	}
 	
-	public void addY(int y1)
+	public void addY(int Y1)
 	{
-		y += y1;
+		Y += Y1;
 	}
 	
-	public void setVY(int vy1)
+	public void setVY(int VY1)
 	{
-		vy = vy1;
+		VY = VY1;
 	}
 	
-	public void setY(int y1)
+	public void setY(int Y1)
 	{
-		y = y1;
+		Y = Y1;
 	}
 	
 	public void setGround(boolean bool)
@@ -3215,6 +3122,7 @@ class spiny
 	{
 	    killed = b;
 	}
+	
 	public void draw(Graphics g)
 	{
 		if(right)
@@ -3232,7 +3140,150 @@ class spiny
 		}
 	}
 }
-/*class bulletBills
+class bulletBill
 {
-	private
-}*/
+	private int X,Y, bX, bY, sizeX, sizeY;
+	private boolean left = false;
+	private boolean right = false;
+	private Image []rightPics = new Image[4];
+	private Image []leftPics = new Image[4];
+	private Image leftPic, rightPic, blaster;
+	private boolean killed = false;
+	private boolean cooldown;
+
+	public bulletBill(int x1, int y1, int bX1, int bY1, int sx1, int sy1, boolean c)
+	{
+		X = x1;
+		Y = y1;
+		sizeX = sx1;
+		sizeY = sy1;
+		bX = bX1;
+		bY = bY1;
+		blaster = new ImageIcon("MarioPics/blaster2.png").getImage().getScaledInstance(60, 70,Image.SCALE_SMOOTH);
+		leftPic = new ImageIcon("MarioPics/leftBill.png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH);
+		rightPic = new ImageIcon("MarioPics/rightBill.png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH);
+		cooldown = c;
+	}
+	
+	public int getX()
+	{
+		return X;
+	}
+	
+	public int getBX()
+	{
+		return bX;
+	}
+	
+	public int getY()
+	{
+		return Y;
+	}
+	
+	public int getBY()
+	{
+		return bY;
+	}
+	
+	public int getSizeX()
+	{
+		return sizeX;
+	}
+	
+	public int getSizeY()
+	{
+		return sizeY;
+	}
+	
+	public boolean getLeft()
+	{
+	    return left;
+	}
+	
+	public boolean getRight()
+	{
+	    return right;
+	}
+	
+	public boolean getKilled()
+	{
+	    return killed;
+	}
+	
+	public boolean getCD()
+	{
+	    return cooldown;
+	}
+	
+	public Image getImage()
+	{
+		return blaster;
+	}
+	
+	public Image getImageRight(int n)
+	{
+		return rightPics[n];
+	}
+	
+	public Image getImageLeft(int n)
+	{
+		return leftPics[n];
+	}
+	
+	public void addX(int num)
+	{
+		X += num;
+	}
+	
+	public void addY(int num)
+	{
+		Y += num;
+	}
+	
+	public void addBX(int num)
+	{
+		bX += num;
+	}
+	
+	public void setX(int n)
+	{
+		X = n;
+	}
+	
+	public void setY(int n)
+	{
+		Y = n;
+	}  
+	
+	public void setLeft(boolean b)
+	{
+	    left = b;
+	}
+	
+	public void setRight(boolean b)
+	{
+	    right = b;
+	}
+	
+	public void setKilled(boolean b)
+	{
+	    killed = b;
+	}
+	
+	public void setCD(boolean b)
+	{
+	    cooldown = b;
+	}
+	
+	public void draw(Graphics g)
+	{
+		if(right)
+		{
+			g.drawImage(rightPic, X+5, Y, null);
+		}
+		if(left)
+		{
+			g.drawImage(leftPic, X-15, Y, null);
+		}
+	}
+}
