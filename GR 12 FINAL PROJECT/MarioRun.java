@@ -54,12 +54,14 @@ public class MarioRun extends JFrame implements ActionListener
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "level3";
+	private String screen = "menu";
 	
 	private boolean []keys;
 	private MarioRun mainFrame;
 	private Point mouse;
 	private Rectangle menuPlay;
+	private Rectangle menuInstructions;
+	private Rectangle menuCredits;
 	private Rectangle intermissionStore;
 	private Rectangle intermissionNext;
 	private Rectangle store1;
@@ -67,7 +69,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private Rectangle store3;
 	private Rectangle storePrev;
 	private int totalCoins;
-	private Image back, platBack, menuback, intermissionback, storeback, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireFlowerIconPic, marioShroomIconPic, fireballLPic, fireballRPic, brickPic, shroomPic, questionPic;
+	private Image backbtn, storebtn, instructionsbtn, nextbtn, creditsbtn, startbtn;
+	private Image backbtnDown, storebtnDown, instructionsbtnDown, nextbtnDown, creditsbtnDown, startbtnDown;
+	private Image back, platBack, menuback, menuinstructions, menucredits, intermissionback, storeback, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireFlowerIconPic, marioShroomIconPic, fireballLPic, fireballRPic, brickPic, shroomPic, questionPic;
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioBigLeftWalkPics = new ArrayList<Image>();
@@ -149,8 +153,11 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
 	public GamePanel(MarioRun m)
 	{
-		menuPlay = new Rectangle(590,200,200,50);
 		addMouseListener(this);
+		
+		menuPlay = new Rectangle(590,200,200,50);
+		menuInstructions = new Rectangle(590,300,200,50);
+		menuCredits = new Rectangle(590,400,200,50);
 		
 		intermissionStore = new Rectangle(100,200,200,50);
 		intermissionNext = new Rectangle(590,200,200,50);
@@ -165,10 +172,26 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		back3 = new ImageIcon("MarioBackground3.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		
 		keys = new boolean[KeyEvent.KEY_LAST+1];
+		backbtn = new ImageIcon("buttons/backbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		instructionsbtn = new ImageIcon("buttons/instructionsbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		creditsbtn = new ImageIcon("buttons/creditsbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		nextbtn = new ImageIcon("buttons/nextbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		storebtn = new ImageIcon("buttons/storebtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		startbtn = new ImageIcon("buttons/startbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		
+		backbtnDown = new ImageIcon("buttons/backbtnDown.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		instructionsbtnDown = new ImageIcon("buttons/instructionsbtnDown.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		creditsbtnDown = new ImageIcon("buttons/creditsbtnDown.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		nextbtnDown = new ImageIcon("buttons/nextbtnDown.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		storebtnDown = new ImageIcon("buttons/storebtnDown.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		startbtnDown = new ImageIcon("buttons/startbtnDown.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
+		
 		back = new ImageIcon("MarioBackground.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		storeback = new ImageIcon("storeBackground.jpg").getImage().getScaledInstance(900,620,Image.SCALE_SMOOTH);
 		intermissionback = new ImageIcon("intermissionBackground.jpg").getImage();
 		menuback = new ImageIcon("MenuBackground.png").getImage();
+		menuinstructions = new ImageIcon("MenuInstructions.png").getImage();
+		menucredits = new ImageIcon("MenuCredits.png").getImage();
 		coinPic = new ImageIcon("Mariopics/coin.gif").getImage().getScaledInstance(15,25,Image.SCALE_SMOOTH);
 		mushroomPic = new ImageIcon("Mariopics/mushroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
 		fireFlowerIconPic = new ImageIcon("Mariopics/fireFlowerIconPic.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
@@ -235,12 +258,12 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		}
 		catch(IOException ex)
 		{
-			System.out.println(ex);
+			//System.out.println(ex);
 			System.exit(1);
 		}
 		catch(FontFormatException ex)
 		{
-			System.out.println(ex);
+			//System.out.println(ex);
 			System.exit(1);
 		}
         currPic = marioRightWalkPics.get(0);
@@ -258,7 +281,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	//loadGoombas2();
     	loadSpinys();
     	loadBills();
-    	System.out.println(spinys2.size());
+    	//System.out.println(spinys2.size());
 
 	}
 	
@@ -484,7 +507,18 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void moveBackLeft()
     {
-		backX -= 4;
+    	if(screen == "level1")
+    	{
+			backX -= 4;
+    	}
+    	else if(screen == "level2")
+    	{
+			backX2 -= 4;
+    	}
+    	else if(screen == "level3")
+    	{
+			backX3 -= 4;
+    	}
 		for(platform p : currPlatforms)
 		{
 			p.addX(-4);
@@ -530,7 +564,18 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     }
     public void moveBackRight()
     {
-		backX += 4;
+    	if(screen == "level1")
+    	{
+			backX += 4;
+    	}
+    	else if(screen == "level2")
+    	{
+			backX2 += 4;
+    	}
+    	else if(screen == "level3")
+    	{
+			backX3 += 4;
+    	}
 		for(platform p : currPlatforms)
 		{
 			p.addX(+4);
@@ -1589,7 +1634,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void checkBillCollide()
     {
-    	System.out.println(currBills.size());
+    	//System.out.println(currBills.size());
     	for(bulletBill bb: currBills)
     	{
     		Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
@@ -1598,7 +1643,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			
     		if(m.intersects(billRect))
     		{
-    			System.out.println(true);
+    			//System.out.println(true);
     			if(bb.getKilled()==false)
     			{
     				if(mario.getVY() >= 2)
@@ -1698,6 +1743,30 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				frames = 0;
 				screen = "level1";
 			}
+			if(menuInstructions.contains(mouse))
+			{
+				frames = 0;
+				screen = "instructions";
+			}
+			if(menuCredits.contains(mouse))
+			{
+				frames = 0;
+				screen = "credits";
+			}
+		}
+		if(screen == "instructions")
+		{
+			if(storePrev.contains(mouse))
+			{
+				screen = "menu";
+			}
+		}
+		if(screen == "credits")
+		{
+			if(storePrev.contains(mouse))
+			{
+				screen = "menu";
+			}
 		}
 		if(screen == "intermission")
 		{
@@ -1772,27 +1841,109 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 	    	g.drawImage(menuback,0,0,null);
     		g.setColor(Color.blue);
-	    	g.fillRect(menuPlay.x,menuPlay.y,menuPlay.width,menuPlay.height);
+	    	if(menuPlay.contains(mouse))
+	    	{
+	    		g.drawImage(startbtnDown,menuPlay.x,menuPlay.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(startbtn,menuPlay.x,menuPlay.y,null);
+	    	}
+	    	if(menuInstructions.contains(mouse))
+	    	{
+	    		g.drawImage(instructionsbtnDown,menuInstructions.x,menuInstructions.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(instructionsbtn,menuInstructions.x,menuInstructions.y,null);
+	    	}
+	    	if(menuCredits.contains(mouse))
+	    	{
+	    		g.drawImage(creditsbtnDown,menuCredits.x,menuCredits.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(creditsbtn,menuCredits.x,menuCredits.y,null);
+	    	}
+    	}
+    	if(screen == "instructions")
+    	{
+	    	g.drawImage(menuinstructions,0,0,null);
+    		g.setColor(Color.blue);
+	    	if(storePrev.contains(mouse))
+	    	{
+	    		g.drawImage(backbtnDown,storePrev.x,storePrev.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(backbtn,storePrev.x,storePrev.y,null);
+	    	}
+    	}
+    	if(screen == "credits")
+    	{
+	    	g.drawImage(menucredits,0,0,null);
+    		g.setColor(Color.blue);
+	    	if(storePrev.contains(mouse))
+	    	{
+	    		g.drawImage(backbtnDown,storePrev.x,storePrev.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(backbtn,storePrev.x,storePrev.y,null);
+	    	}
     	}
     	if(screen == "intermission")
     	{
 	    	g.drawImage(intermissionback,0,0,null);
-    		g.setColor(Color.blue);
-	    	g.fillRect(intermissionNext.x,intermissionNext.y,intermissionNext.width,intermissionNext.height);
-	    	g.fillRect(intermissionStore.x,intermissionStore.y,intermissionStore.width,intermissionStore.height);
+	    	if(intermissionNext.contains(mouse))
+	    	{
+	    		g.drawImage(nextbtnDown,intermissionNext.x,intermissionNext.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(nextbtn,intermissionNext.x,intermissionNext.y,null);
+	    	}
+	    	if(intermissionStore.contains(mouse))
+	    	{
+	    		g.drawImage(storebtnDown,intermissionStore.x,intermissionStore.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(storebtn,intermissionStore.x,intermissionStore.y,null);
+	    	}
     	}
     	if(screen == "intermission2")
     	{
 	    	g.drawImage(intermissionback,0,0,null);
-    		g.setColor(Color.blue);
-	    	g.fillRect(intermissionNext.x,intermissionNext.y,intermissionNext.width,intermissionNext.height);
-	    	g.fillRect(intermissionStore.x,intermissionStore.y,intermissionStore.width,intermissionStore.height);
+	    	if(intermissionNext.contains(mouse))
+	    	{
+	    		g.drawImage(nextbtnDown,intermissionNext.x,intermissionNext.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(nextbtn,intermissionNext.x,intermissionNext.y,null);
+	    	}
+	    	if(intermissionStore.contains(mouse))
+	    	{
+	    		g.drawImage(storebtnDown,intermissionStore.x,intermissionStore.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(storebtn,intermissionStore.x,intermissionStore.y,null);
+	    	}
     	}
     	if(screen == "store")
     	{
 	    	g.drawImage(storeback,0,0,null);
     		g.setColor(Color.blue);
-	    	g.fillRect(storePrev.x,storePrev.y,storePrev.width,storePrev.height);
+	    	if(storePrev.contains(mouse))
+	    	{
+	    		g.drawImage(backbtnDown,storePrev.x,storePrev.y,null);
+	    	}
+	    	else
+	    	{
+	    		g.drawImage(backbtn,storePrev.x,storePrev.y,null);
+	    	}
 			g.setColor(Color.white);
 			g.drawImage(lifeIconPic, 5, 7, null); 
 			g.drawImage(coinIconPic, 10, 40, null);
@@ -1808,7 +1959,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			g.drawString("x"+Integer.toString(lives), 37, 35);
 			g.drawString(Integer.toString(totalCoins), 33, 69);
     	}
-    	else
+    	if(screen == "level1" || screen == "level2" || screen == "level3")
     	{
     		Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
     		g.drawImage(currBack,currBackX,0,null);
