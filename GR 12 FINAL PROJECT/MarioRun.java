@@ -71,7 +71,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private int totalCoins;
 	private Image backbtn, storebtn, instructionsbtn, nextbtn, creditsbtn, startbtn;
 	private Image backbtnDown, storebtnDown, instructionsbtnDown, nextbtnDown, creditsbtnDown, startbtnDown;
-	private Image back, platBack, menuback, menuinstructions, menucredits, intermissionback, storeback, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireFlowerIconPic, marioShroomIconPic, fireballLPic, fireballRPic, brickPic, shroomPic, questionPic;
+	private Image back, platBack, menuback, menuinstructions, menucredits, intermissionback, intermissionback2, storeback, currPic, coinIconPic, lifeIconPic, coinPic, mushroomPic, fireFlowerIconPic, marioShroomIconPic, fireballLPic, fireballRPic, brickPic, shroomPic, questionPic;
 	private ArrayList<Image>marioLeftWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioRightWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>marioBigLeftWalkPics = new ArrayList<Image>();
@@ -112,6 +112,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<marioShroom> currMarioMushrooms = new ArrayList<marioShroom>();
 	private Image currBack;
 	private int currBackX;
+	private int intermissionNum;
 	
 	//Each level consists of at least some platforms, coins, green mushrooms (gives extra lives), goombas, bricks and question blocks
 	//and red mushrooms (transform mario into big mario). Level 2 introduces spinys and level 3 brings bullet bills.
@@ -135,7 +136,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	//Level3------------------------
 	private Image back3;
 	private int backX3 = -20;
-	private int intermissionNum;
 	private ArrayList<coin>coins3 = new ArrayList<coin>();
 	private ArrayList<platform>platforms3 = new ArrayList<platform>();
 	private ArrayList<mushroom>mushrooms3 = new ArrayList<mushroom>();
@@ -144,6 +144,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<bulletBill> bills = new ArrayList<bulletBill>();
 	private ArrayList<ArrayList<brick>>bricks3 = new ArrayList<ArrayList<brick>>();
 	private ArrayList<marioShroom> marioMushrooms3 = new ArrayList<marioShroom>();
+	//Level4------------------------
+	private Image back4;
+	private int backX4 = -20;
 	
 	player mario = new player(430,ground,0,false,false,50,25);
 	fireball fball = new fireball(mario.getX(),mario.getY(),40,30,false,false,false);
@@ -170,6 +173,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		back2 = new ImageIcon("MarioBackground2.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		
 		back3 = new ImageIcon("MarioBackground3.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
+
+		back4 = new ImageIcon("MarioBackground4.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		
 		keys = new boolean[KeyEvent.KEY_LAST+1];
 		backbtn = new ImageIcon("buttons/backbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
@@ -189,6 +194,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		back = new ImageIcon("MarioBackground.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		storeback = new ImageIcon("storeBackground.jpg").getImage().getScaledInstance(900,620,Image.SCALE_SMOOTH);
 		intermissionback = new ImageIcon("intermissionBackground.jpg").getImage();
+		intermissionback2 = new ImageIcon("intermissionBackground2.jpg").getImage();
 		menuback = new ImageIcon("MenuBackground.png").getImage();
 		menuinstructions = new ImageIcon("MenuInstructions.png").getImage();
 		menucredits = new ImageIcon("MenuCredits.png").getImage();
@@ -350,6 +356,15 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		intermissionNum = 2;
 	    	}	
     	}
+    	if(screen == "level3")
+    	{
+	    	if(backX3 < -9560)
+	    	{
+	    		totalCoins = collectedCoins;
+	    		screen = "intermission3";
+	    		intermissionNum = 3;
+	    	}	
+    	}
     }
     
     public void shrink()
@@ -416,6 +431,11 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		currBackX = backX3;
     		currBack = back3;
     	}
+    	if(screen == "level4")
+    	{
+    		currBackX = backX4;
+    		currBack = back4;
+    	}
     }
     
     public void getTmp()
@@ -478,6 +498,18 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    	}
 	    	collectedCoins = count + totalCoins;
     	}
+    	if(screen == "level3")
+    	{
+	    	int count = 0;
+	    	for(coin c : coins3)
+	    	{
+	    		if(c.getCollected()==true)
+	    		{
+	    			count += c.getPoints();
+	    		}
+	    	}
+	    	collectedCoins = count + totalCoins;
+    	}
     }
     
     public void invincibilityCooldown()
@@ -519,6 +551,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	else if(screen == "level3")
     	{
 			backX3 -= 4;
+    	}
+    	else if(screen == "level4")
+    	{
+			backX4 -= 4;
     	}
 		for(platform p : currPlatforms)
 		{
@@ -576,6 +612,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	else if(screen == "level3")
     	{
 			backX3 += 4;
+    	}
+    	else if(screen == "level4")
+    	{
+			backX4 += 4;
     	}
 		for(platform p : currPlatforms)
 		{
@@ -726,6 +766,47 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			if(!collideR && !collide)
 			{
 				if(keys[KeyEvent.VK_LEFT] && backX3 <= 0)
+				{
+					right = false;
+					left = true;
+					if(shiftLeft == false)
+					{
+						mario.addX(10);
+					}
+					shiftRight = false;
+					shiftLeft = true;
+					moveBackRight();
+				}
+			}
+			else
+			{
+				right = false;
+				left = false;
+			}
+			Point m = MouseInfo.getPointerInfo().getLocation();
+			Point offset = getLocationOnScreen();
+		}
+		if(screen == "level4")
+		{
+			if(!collideL && !collide)
+			{
+				if(keys[KeyEvent.VK_RIGHT] && backX4 >= -500)
+				{
+					right = true;
+					left = false;
+					if(shiftRight == false)
+					{
+						mario.addX(-10);
+					}
+					shiftRight = true;
+					shiftLeft = false;
+					moveBackLeft();
+				}	
+			}
+			
+			if(!collideR && !collide)
+			{
+				if(keys[KeyEvent.VK_LEFT] && backX4 <= 0)
 				{
 					right = false;
 					left = true;
@@ -1296,7 +1377,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		for(goomba g : goombas3)
     		{
     			Rectangle newRect = new Rectangle(x,555-25,50,20);
-    			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
+    			Rectangle oldRect = new Rectangle(g.getX()-10,g.getY(),g.getSizeX()+20,g.getSizeY());
     			if(newRect.intersects(oldRect))
     			{
 					sameSpot = true;
@@ -1791,6 +1872,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				screen = "store";
 			}
 		}
+		if(screen == "intermission3")
+		{
+			if(intermissionNext.contains(mouse))
+			{
+				screen = "level4";
+			}
+			if(intermissionStore.contains(mouse))
+			{
+				screen = "store";
+			}
+		}
 		if(screen == "store")
 		{
 			if(storePrev.contains(mouse))
@@ -1802,6 +1894,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				if(intermissionNum == 2)
 				{
 					screen = "intermission2";
+				}
+				if(intermissionNum == 3)
+				{
+					screen = "intermission3";
 				}
 			}
 			if(store1.contains(mouse))
@@ -1893,7 +1989,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		g.drawImage(backbtn,storePrev.x,storePrev.y,null);
 	    	}
     	}
-    	if(screen == "intermission")
+    	if(screen == "intermission" || screen == "intermission2")
     	{
 	    	g.drawImage(intermissionback,0,0,null);
 	    	if(intermissionNext.contains(mouse))
@@ -1913,9 +2009,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		g.drawImage(storebtn,intermissionStore.x,intermissionStore.y,null);
 	    	}
     	}
-    	if(screen == "intermission2")
+    	if(screen == "intermission3")
     	{
-	    	g.drawImage(intermissionback,0,0,null);
+	    	g.drawImage(intermissionback2,0,0,null);
 	    	if(intermissionNext.contains(mouse))
 	    	{
 	    		g.drawImage(nextbtnDown,intermissionNext.x,intermissionNext.y,null);
@@ -1960,7 +2056,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			g.drawString("x"+Integer.toString(lives), 37, 35);
 			g.drawString(Integer.toString(totalCoins), 33, 69);
     	}
-    	if(screen == "level1" || screen == "level2" || screen == "level3")
+    	if(screen == "level1" || screen == "level2" || screen == "level3" || screen == "level4")
     	{
     		Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
     		g.drawImage(currBack,currBackX,0,null);
