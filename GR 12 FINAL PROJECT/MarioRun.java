@@ -54,7 +54,7 @@ public class MarioRun extends JFrame implements ActionListener
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "menu";
+	private String screen = "level3";
 	
 	private boolean []keys;
 	private MarioRun mainFrame;
@@ -203,6 +203,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		brickPic = new ImageIcon("Mariopics/mariobrick.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
 		questionPic = new ImageIcon("Mariopics/questionblock.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
 		shroomPic = new ImageIcon("Mariopics/redShroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
+
 		for(int i=0; i<4; i++)
 		{
 			brickSegments[i] = new ImageIcon("Mariopics/brickSegment"+Integer.toString(i)+".jpg").getImage().getScaledInstance(10,10,Image.SCALE_SMOOTH);
@@ -2202,7 +2203,14 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 
 					if(bb.getCD() && !bb.getKilled())
 					{
-						bb.draw(g);	//drawing the bullet bills	
+						if(Math.abs(bb.getX()-bb.getBX())<= 370)
+						{
+							bb.draw(g);	//drawing the bullet bills	
+						}
+						else
+						{
+							bb.drawExplosion(g);
+						}
 					}
 					g.drawImage(bb.getImage(), bb.getBX(), bb.getBY(), null); //drawing blaster
 					if(Math.abs(bb.getX()-bb.getBX())>= 400)
@@ -3298,7 +3306,7 @@ class bulletBill
 	private boolean right = false;
 	private Image []rightPics = new Image[4];
 	private Image []leftPics = new Image[4];
-	private Image leftPic, rightPic, blaster;
+	private Image leftPic, rightPic, blaster, explodePic;
 	private boolean killed = false;
 	private boolean cooldown;
 
@@ -3313,6 +3321,7 @@ class bulletBill
 		blaster = new ImageIcon("MarioPics/blaster2.png").getImage().getScaledInstance(60, 70,Image.SCALE_SMOOTH);
 		leftPic = new ImageIcon("MarioPics/leftBill.png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH);
 		rightPic = new ImageIcon("MarioPics/rightBill.png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH);
+		explodePic = new ImageIcon("Mariopics/explosionPic.png").getImage().getScaledInstance(sizeX,sizeY,Image.SCALE_SMOOTH);
 		cooldown = c;
 	}
 	
@@ -3436,5 +3445,9 @@ class bulletBill
 		{
 			g.drawImage(leftPic, X-15, Y, null);
 		}
+	}
+	public void drawExplosion(Graphics g)
+	{
+		g.drawImage(explodePic, X+5, Y, null);
 	}
 }
