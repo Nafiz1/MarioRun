@@ -54,7 +54,7 @@ public class MarioRun extends JFrame implements ActionListener
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "intermission2";
+	private String screen = "level3";
 	
 	private boolean []keys;
 	private MarioRun mainFrame;
@@ -157,6 +157,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<BufferedImage> platTopPics3 = new ArrayList<BufferedImage>();
 	private BufferedImage platPic3;
 	private BufferedImage platTopPic;
+	//Level3------------------------
+	private Image back4;
+	private int backX4 = -20;
 	
 	player mario = new player(430,ground,0,false,false,50,25);
 	fireball fball = new fireball(mario.getX(),mario.getY(),40,30,false,false,false);
@@ -182,6 +185,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		back2 = new ImageIcon("MarioBackground2.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		
 		back3 = new ImageIcon("MarioBackground3.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
+		
+		back4 = new ImageIcon("MarioBackground4.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
 		
 		keys = new boolean[KeyEvent.KEY_LAST+1];
 		backbtn = new ImageIcon("buttons/backbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
@@ -362,7 +367,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	
     	if(screen == "level3")
     	{
-	    	if(backX3 < -9560)
+	    	if(backX3 < -9760)
 	    	{
 	    		totalCoins = collectedCoins;
 	    		screen = "intermission3";
@@ -440,6 +445,12 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		currBack = back3;
     		currPlatPics = platPics3;    		
     		currPlatTopPics = platTopPics3;
+    	}
+    	
+    	if(screen == "level4")
+    	{
+    		currBackX = backX4;
+    		currBack = back4;
     	}
     }
     
@@ -530,6 +541,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 			backX3 -= 4;
     	}
+    	else if(screen == "level4")
+    	{
+			backX4 -= 4;
+    	}
 		for(platform p : currPlatforms)
 		{
 			p.addX(-4);
@@ -586,6 +601,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	else if(screen == "level3")
     	{
 			backX3 += 4;
+    	}
+    	else if(screen == "level4")
+    	{
+			backX4 += 4;
     	}
 		for(platform p : currPlatforms)
 		{
@@ -736,6 +755,47 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			if(!collideR && !collide)
 			{
 				if(keys[KeyEvent.VK_LEFT] && backX3 <= 0)
+				{
+					right = false;
+					left = true;
+					if(shiftLeft == false)
+					{
+						mario.addX(10);
+					}
+					shiftRight = false;
+					shiftLeft = true;
+					moveBackRight();
+				}
+			}
+			else
+			{
+				right = false;
+				left = false;
+			}
+			Point m = MouseInfo.getPointerInfo().getLocation();
+			Point offset = getLocationOnScreen();
+		}
+		if(screen == "level4")
+		{
+			if(!collideL && !collide)
+			{
+				if(keys[KeyEvent.VK_RIGHT] && backX4 >= -600)
+				{
+					right = true;
+					left = false;
+					if(shiftRight == false)
+					{
+						mario.addX(-10);
+					}
+					shiftRight = true;
+					shiftLeft = false;
+					moveBackLeft();
+				}	
+			}
+			
+			if(!collideR && !collide)
+			{
+				if(keys[KeyEvent.VK_LEFT] && backX4 <= 0)
 				{
 					right = false;
 					left = true;
@@ -1347,7 +1407,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    	for(int i=0; i<30; i++)
 	    	{
 	    		x = rand.nextInt(9000) + 500;
-	    		y = 430;
+	    		y = rand.nextInt(15) + 420;
 	    		for(ArrayList<brick> b2: currList)
 	    		{
 	    			for(brick b: b2)
@@ -1999,7 +2059,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			g.drawString("x"+Integer.toString(lives), 37, 35);
 			g.drawString(Integer.toString(totalCoins), 33, 69);
     	}
-    	if(screen == "level1" || screen == "level2" || screen == "level3")
+    	if(screen == "level1" || screen == "level2" || screen == "level3" || screen == "level4")
     	{
     		Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
     		g.drawImage(currBack,currBackX,0,null);
