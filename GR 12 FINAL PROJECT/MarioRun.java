@@ -4,6 +4,7 @@
 
 import java.util.*;
 import java.io.*;
+import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -88,6 +89,14 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<ArrayList<Image>> evolvePicsRight = new ArrayList<ArrayList<Image>>();
 	private ArrayList<ArrayList<Image>> evolvePicsLeft = new ArrayList<ArrayList<Image>>();
 	
+	AudioClip sound;
+	File clearwavFile = new File("sounds/clear.wav");
+	File oneupwavFile = new File("sounds/1up.wav");
+	File breakwavFile = new File("sounds/break.wav");
+	File damagewavFile = new File("sounds/damage.wav");
+	File firewavFile = new File("sounds/fire.wav");
+	File startwavFile = new File("sounds/start.wav");
+	
 	private int frames;
 	private int jCooldownCount = 0;
 	private int evolveCD = 0;
@@ -158,7 +167,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<BufferedImage> platTopPics3 = new ArrayList<BufferedImage>();
 	private BufferedImage platPic3;
 	private BufferedImage platTopPic;
-	//Level3------------------------
+	//Level4------------------------
 	private Image back4;
 	private int backX4 = -20;
 	
@@ -351,6 +360,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 	    	if(backX < -9560)
 	    	{
+			    try{sound = Applet.newAudioClip(clearwavFile.toURL());}
+			    catch(Exception e){e.printStackTrace();}
+			    sound.play();
 	    		totalCoins = collectedCoins;
 	    		screen = "intermission";
 	    		intermissionNum = 1;
@@ -360,6 +372,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 	    	if(backX2 < -9560)
 	    	{
+			    try{sound = Applet.newAudioClip(clearwavFile.toURL());}
+			    catch(Exception e){e.printStackTrace();}
+			    sound.play();
 	    		totalCoins = collectedCoins;
 	    		screen = "intermission2";
 	    		intermissionNum = 2;
@@ -370,6 +385,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 	    	if(backX3 < -9760)
 	    	{
+			    try{sound = Applet.newAudioClip(clearwavFile.toURL());}
+			    catch(Exception e){e.printStackTrace();}
+			    sound.play();
 	    		totalCoins = collectedCoins;
 	    		screen = "intermission3";
 	    		intermissionNum = 3;
@@ -852,6 +870,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			fball.setX(mario.getX());
 			fball.setY(mario.getY()+20);
 			fball.setUsed(true);
+		    try{sound = Applet.newAudioClip(firewavFile.toURL());}
+		    catch(Exception e){e.printStackTrace();}
+		    sound.play();
 		}
 		if(fball.getUsed() == true)
 		{
@@ -1553,6 +1574,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			        	{
 			        		if(!b.getQuestion()) //if it is a normal brick
 			        		{
+							    try{sound = Applet.newAudioClip(breakwavFile.toURL());}
+							    catch(Exception e){e.printStackTrace();}
+							    sound.play();
 		        				mario.setVY(5);
 				        		mario.setJump(true);
 				        		b.setBroken(true);
@@ -1647,10 +1671,16 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     				{
 	    				if(marioBig && !invE) //if mario is big mario or he is not in the animation of growing into big mario
 	    				{
+						    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
+						    catch(Exception e){e.printStackTrace();}
+						    sound.play();
 	    					shrink();
     					}
     					else if(invincible == false)
     					{
+						    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
+						    catch(Exception e){e.printStackTrace();}
+						    sound.play();
 	    					lives -= 1;
 							inv = true;
     					}
@@ -1685,9 +1715,15 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     				{
     					shrink();
     					getTmp();
+					    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
+					    catch(Exception e){e.printStackTrace();}
+					    sound.play();
 					}
 					else if(invincible == false)
 					{
+					    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
+					    catch(Exception e){e.printStackTrace();}
+					    sound.play();
     					lives -= 1;
 						inv = true;
 					}
@@ -1730,9 +1766,15 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     				{
     					shrink();
     					getTmp();
+					    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
+					    catch(Exception e){e.printStackTrace();}
+					    sound.play();
 					}
 					else if(invincible == false)
 					{
+					    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
+					    catch(Exception e){e.printStackTrace();}
+					    sound.play();
     					lives -= 1;
 						inv = true;
 					}
@@ -1756,11 +1798,14 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	for(mushroom mu : currMushrooms)
     	{
 			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-			Rectangle goombaRect = new Rectangle(mu.getX(),mu.getY(),mu.getSizeX(),mu.getSizeY());
-    		if(m.intersects(goombaRect))
+			Rectangle mushRect = new Rectangle(mu.getX(),mu.getY(),mu.getSizeX(),mu.getSizeY());
+    		if(m.intersects(mushRect))
     		{
     			if(mu.getCollected()==false)
     			{
+				    try{sound = Applet.newAudioClip(oneupwavFile.toURL());}
+				    catch(Exception e){e.printStackTrace();}
+				    sound.play();
     				lives += 1;
     				mu.setCollected(true);
     			}
@@ -1817,6 +1862,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{
 				frames = 0;
 				screen = "level1";
+			    try{sound = Applet.newAudioClip(startwavFile.toURL());}
+			    catch(Exception ex){ex.printStackTrace();}
+			    sound.play();
 			}
 			if(menuInstructions.contains(mouse))
 			{
@@ -1849,6 +1897,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{
 				mario.setVY(0);
 				screen = "level2";
+			    try{sound = Applet.newAudioClip(startwavFile.toURL());}
+			    catch(Exception ex){ex.printStackTrace();}
+			    sound.play();
 			}
 			if(intermissionStore.contains(mouse))
 			{
@@ -1862,6 +1913,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				mario.setVY(0);
 				frames=0;
 				screen = "level3";
+			    try{sound = Applet.newAudioClip(startwavFile.toURL());}
+			    catch(Exception ex){ex.printStackTrace();}
+			    sound.play();
 			}
 			if(intermissionStore.contains(mouse))
 			{
@@ -1875,6 +1929,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				mario.setVY(0);
 				frames=0;
 				screen = "level4";
+			    try{sound = Applet.newAudioClip(startwavFile.toURL());}
+			    catch(Exception ex){ex.printStackTrace();}
+			    sound.play();
 			}
 			if(intermissionStore.contains(mouse))
 			{
@@ -1933,7 +1990,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 
     public void paintComponent(Graphics g)
     { 	
-    	System.out.println(mouse);
     	if(mouse==null)
     	{
     		return;
