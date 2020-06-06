@@ -56,7 +56,7 @@ public class MarioRun extends JFrame implements ActionListener
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "menu";
+	private String screen = "intermission2";
 	
 	private boolean []keys;
 	private MarioRun mainFrame;
@@ -328,18 +328,21 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	checkDeath();
     	checkFinish();
     	checkCollectedCoins();
-    	checkPlatformCollide();
-    	checkCoinCollide();
-    	checkGoombaCollide();
-    	checkMushroomCollide();
-    	checkShroomCollide();
-    	checkBrickCollide();
-    	checkSpinyCollide();
-    	checkBillCollide();
-    	moveGoombas();
-    	moveMushrooms();
-    	moveSpinys();
-    	moveBills();
+    	if(screen == "level1" || screen == "level2" || screen == "level3" )
+    	{
+	    	checkPlatformCollide();
+	    	checkCoinCollide();
+	    	checkGoombaCollide();
+	    	checkMushroomCollide();
+	    	checkShroomCollide();
+	    	checkBrickCollide();
+	    	checkSpinyCollide();
+	    	checkBillCollide();
+	    	moveGoombas();
+	    	moveMushrooms();
+	    	moveSpinys();
+	    	moveBills();
+    	}
     	
 		mouse = MouseInfo.getPointerInfo().getLocation();
 		Point offset = getLocationOnScreen();
