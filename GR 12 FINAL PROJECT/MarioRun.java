@@ -48,13 +48,14 @@ public class MarioRun extends JFrame implements ActionListener
 
     public static void main(String[] arguments)
     {
+    	GameMusic music = new GameMusic();	
 		MarioRun frame = new MarioRun();
     }
 }
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "level3";
+	private String screen = "menu";
 	
 	private boolean []keys;
 	private MarioRun mainFrame;
@@ -1630,7 +1631,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
 			Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
-			Rectangle mBot = new Rectangle(mario.getX(), mario.getY()+mario.getHeight()-5, mario.getWidth(), 5);
+			Rectangle mBot = new Rectangle(mario.getX(), mario.getY()+mario.getHeight()-15, mario.getWidth(), 15);
 			Rectangle gTop = new Rectangle(g.getX(), g.getY(), g.getSizeX(), 5);
 			Rectangle goombaRect = new Rectangle(g.getX(),g.getY(),g.getSizeX(),g.getSizeY());
     		if(m.intersects(goombaRect))
