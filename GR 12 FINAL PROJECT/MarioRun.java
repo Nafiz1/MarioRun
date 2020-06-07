@@ -2,11 +2,12 @@
 //Nafiz Hasan and Ashad Ahmed
 //This program is a Mario-inspired game in which the user has to get Mario through 3 randomly generated levels and onto the 4th level in which Bowser has held Princess
 //Peach captive. In each level, the user will find platforms and the classic Mario bricks in which the user can obtain a red mushroom to transform into big Mario. For enemies, 
-//level 1 has goombas, level two has goombas and spinys, level 3 has goombas, spinys, and bullet bills. Lastly, level 4 obviously has Bowser. The user has 5 lives to spare until
-//he/she dies and has to restart the game, and the user can also aqcuire green mushrooms that are randomly generated in the first 3 levels to gain a life. Coins are also randomly generated 
-//within the first three levels, and can be used to purchase items in the shop. A chance to enter the shop is present at the end of the first 3 levels. 
-//The user can buy red mushrooms for 5 coins, green mushrooms for 10 coins, and fire flowers which allow Mario to shoot fireballs for 25 coins (NOTE: you will need this to defeat Bowser and complete the game). 
+//level 1 has goombas, level two has goombas and spinys, level 3 has goombas, spinys, and bullet bills. Lastly, level 4 obviously has Bowser. The user starts with 5 lives,
+//and if the user loses all lives they have to to restart the game. The user can also aqcuire green mushrooms that are randomly generated in the first 3 levels to gain lives. Coins are also randomly generated 
+//within the first three levels, and can be used to purchase items in the shop. A chance to enter the shop is present at the end of every level. 
+//The user can buy red mushrooms for 5 coins, green mushrooms for 10 coins, and fire flowers which allow Mario to shoot fireballs for 25 coins. 
 
+//importing
 import java.util.*;
 import java.io.*;
 import java.applet.*;
@@ -32,7 +33,6 @@ public class MarioRun extends JFrame implements ActionListener
 		setSize(900,650);
 
 		myTimer = new Timer(15, this);
-
 	
 		game = new GamePanel(this);
 		add(game);
@@ -49,13 +49,13 @@ public class MarioRun extends JFrame implements ActionListener
 
 	public void actionPerformed(ActionEvent evt)
 	{
-		game.update();
+		game.update(); //updates all methods
 		game.repaint();
 	}
 
     public static void main(String[] arguments)
     {
-    	GameMusic music = new GameMusic();	
+    	GameMusic music = new GameMusic(); //loads the mario music
 		MarioRun frame = new MarioRun();
     }
 }
@@ -64,6 +64,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 {
 	private String screen = "menu";
 	
+	//Game Data
 	private boolean []keys;
 	private MarioRun mainFrame;
 	private Point mouse;
@@ -87,7 +88,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<Image>marioBigRightWalkPics = new ArrayList<Image>();
 	private ArrayList<Image>tmp = new ArrayList<Image>();
 	private Image[] brickSegments = new Image[4];
-	
 	private int ground = 555-50;
 	private int collectedCoins = 0;
 	private boolean shiftLeft = false;
@@ -99,15 +99,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<brick> currBrick = new ArrayList<brick>();
 	private ArrayList<ArrayList<Image>> evolvePicsRight = new ArrayList<ArrayList<Image>>();
 	private ArrayList<ArrayList<Image>> evolvePicsLeft = new ArrayList<ArrayList<Image>>();
-	//Sound Effects------------------------
-	AudioClip sound;
-	File clearwavFile = new File("sounds/clear.wav");
-	File oneupwavFile = new File("sounds/1up.wav");
-	File breakwavFile = new File("sounds/break.wav");
-	File damagewavFile = new File("sounds/damage.wav");
-	File firewavFile = new File("sounds/fire.wav");
-	File startwavFile = new File("sounds/start.wav");
-	
 	private int frames;
 	private int jCooldownCount = 0;
 	private int evolveCD = 0;
@@ -121,7 +112,19 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private Font marioFont;
 	private boolean fireflowerPower = true;
 	private int breakCount = 0;
-	//Current Data------------------------This is for deciding which enemies, pictures, etc. to use in each level
+	
+	//Sound Effects------------------------
+	AudioClip sound;
+	File clearwavFile = new File("sounds/clear.wav");
+	File oneupwavFile = new File("sounds/1up.wav");
+	File breakwavFile = new File("sounds/break.wav");
+	File damagewavFile = new File("sounds/damage.wav");
+	File firewavFile = new File("sounds/fire.wav");
+	File startwavFile = new File("sounds/start.wav");
+	
+	//Current Data------------------------ This is for deciding which enemies, pictures, etc. to use in each level
+	player mario = new player(430,ground,0,false,false,50,25);
+	fireball fball = new fireball(mario.getX(),mario.getY(),40,30,false,false,false);
 	private ArrayList<coin> currCoins = new ArrayList<coin>();
 	private ArrayList<platform> currPlatforms = new ArrayList<platform>();
 	private ArrayList<mushroom> currMushrooms = new ArrayList<mushroom>();
@@ -135,8 +138,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private ArrayList<BufferedImage> currPlatPics = new ArrayList<BufferedImage>();
 	private ArrayList<BufferedImage> currPlatTopPics = new ArrayList<BufferedImage>();
 	
-	//Each level consists of at least some platforms, coins, green mushrooms (gives extra lives), goombas, bricks and question blocks
-	//and red mushrooms (transform mario into big mario). Level 2 introduces spinys and level 3 brings bullet bills.
+	//Each level consists of at least some platforms, coins, 1up mushrooms, goombas, bricks, question blocks,
+	//and red mushrooms. Level 2 introduces spinys and level 3 introduces bullet bills.
+	
 	//Level1------------------------
 	private Image back;
 	private int backX = -20;
@@ -183,33 +187,26 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private int backX4 = -20;
 	boss bowser = new boss(550, 555-70, 70, 70, 100);
 	
-	player mario = new player(430,ground,0,false,false,50,25);
-	fireball fball = new fireball(mario.getX(),mario.getY(),40,30,false,false,false);
-	
 	public GamePanel(MarioRun m)
 	{
 		addMouseListener(this);
 		
+		//button rectangles
 		menuPlay = new Rectangle(590,200,200,50);
 		menuInstructions = new Rectangle(590,300,200,50);
 		menuCredits = new Rectangle(590,400,200,50);
-		
 		intermissionStore = new Rectangle(100,200,200,50);
 		intermissionNext = new Rectangle(590,200,200,50);
-		
 		storePrev = new Rectangle(610,30,200,50);
 		store1 = new Rectangle(73,417,200,200);
 		store2 = new Rectangle(332,417,200,200);
 		store3 = new Rectangle(626,417,200,200);
-		
 		exit = new Rectangle(350, 450, 200, 100);
 		
+		//loading images
 		back2 = new ImageIcon("MarioBackground2.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
-		
 		back3 = new ImageIcon("MarioBackground3.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
-		
 		back4 = new ImageIcon("MarioBackground4.png").getImage().getScaledInstance(10500,650,Image.SCALE_SMOOTH);
-		
 		keys = new boolean[KeyEvent.KEY_LAST+1];
 		backbtn = new ImageIcon("buttons/backbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
 		instructionsbtn = new ImageIcon("buttons/instructionsbtn.png").getImage().getScaledInstance(200,50,Image.SCALE_SMOOTH);
@@ -248,6 +245,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		questionPic = new ImageIcon("Mariopics/questionblock.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
 		emptyQuestionPic = new ImageIcon("Mariopics/emptyQuestionblock.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
 		shroomPic = new ImageIcon("Mariopics/redShroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
+		
+		//loading images for arrays, used for animations
 		for(int i=0; i<4; i++)
 		{
 			brickSegments[i] = new ImageIcon("Mariopics/brickSegment"+Integer.toString(i)+".jpg").getImage().getScaledInstance(10,10,Image.SCALE_SMOOTH);
@@ -276,7 +275,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
         		
         	}
         }
-        for(int i=0; i<8; i+=2) //two evolve picturesf for every picture in the marioWalk pictures 
+        for(int i=0; i<8; i+=2) //two evolve pictures for every picture in the marioWalk pictures 
         {
         	ArrayList<Image> tmp = new ArrayList<Image>();
         	tmp.add(new ImageIcon("Mariopics/marioE"+Integer.toString(i)+".png").getImage());
@@ -314,6 +313,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			System.out.println(ex);
 			System.exit(1);
 		}
+		
+		//loading everything in the game
         currPic = marioRightWalkPics.get(0);
 		mainFrame = m;
 		setSize(800,600);
@@ -373,7 +374,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
     public void checkDeath()
     {
-    	if(lives == 0)
+    	if(lives == 0) //when the player loses all lives the game ends
     	{
     		System.exit(0);
     	}
@@ -381,16 +382,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void checkFinish()
     {
+    	//once the player reaches a certain point in the level they are brought to the intermission screen for the next level
     	if(screen == "level1")
     	{
 	    	if(backX < -9560)
 	    	{
-			    try{sound = Applet.newAudioClip(clearwavFile.toURL());}
+			    try{sound = Applet.newAudioClip(clearwavFile.toURL());} //level clear sound
 			    catch(Exception e){e.printStackTrace();}
 			    sound.play();
-	    		totalCoins = collectedCoins;
-	    		screen = "intermission";
-	    		intermissionNum = 1;
+	    		totalCoins = collectedCoins; //the total coins variable becomes equal to the collected coins of the level
+	    		screen = "intermission"; //goes to the intermission screen
+	    		intermissionNum = 1; //controls what intermission to go back to when in the store
 	    	}	
     	}
     	if(screen == "level2")
@@ -422,6 +424,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void shrink()
     {
+    	//makes mario smaller
 		mario.setHeight(50);
 		mario.setWidth(25);
 		marioBig = false;
@@ -434,6 +437,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void grow()
     {
+    	//makes mario bigger
 		mario.setHeight(70);
 		mario.setWidth(40);
 		marioBig = true;
@@ -446,6 +450,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void getCurr()
     {
+    	//used to get the variables for the current level the user is on
     	if(screen == "level1")
     	{
     		currPlatforms = platforms;
@@ -542,25 +547,28 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void checkCollectedCoins()
     {
+    	//used to total the coins on the ground and platforms
     	int count = 0;
     	for(coin c : currCoins)
     	{
     		if(c.getCollected()==true)
     		{
+    			//if a coin is collected it is added to count, the total amount of coins collected in the level
     			count += c.getPoints();
     		}
     	}
-    	collectedCoins = count + totalCoins;
+    	collectedCoins = count + totalCoins; //the final total is the collectedCoins(collected in the level) + the totalCoins(which were gained previously)
     }
     
     public void invincibilityCooldown()
     {
-    	if(inv)
+    	if(inv) //damage invincibility
     	{
     		invincible = true;
     		invincibleCount += 1;
-    		if(invincibleCount == 60)
+    		if(invincibleCount == 60) //for a certain time the player will not take any damage
     		{
+    			//when that time is over the players invincibilty disappears
 	    		invincible = false;
 	    		invincibleCount = 0;
 	    		inv = false;
@@ -581,6 +589,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void moveBackLeft()
     {
+    	//the player itself does not move, but the background moves with the arrow keys
+    	
+    	//used to move everything in the level left
     	if(screen == "level1")
     	{
 			backX -= 4;
@@ -643,6 +654,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     }
     public void moveBackRight()
     {
+       	//used to move everything in the level right
     	if(screen == "level1")
     	{
 			backX += 4;
@@ -712,21 +724,22 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{
 				if(keys[KeyEvent.VK_RIGHT])
 				{
+					//controls direction
 					right = true;
 					left = false;
 					if(shiftRight == false)
 					{
-						mario.addX(-10);
+						mario.addX(-10); //shifts the player to the left or right to better indicate the direction
 					}
 					shiftRight = true;
 					shiftLeft = false;
-					moveBackLeft();
+					moveBackLeft(); //moves the background left or right
 				}	
 			}
 			
 			if(!collideR && !collide)
 			{
-				if(keys[KeyEvent.VK_LEFT] && backX <= 0)
+				if(keys[KeyEvent.VK_LEFT] && backX <= 0) //the player can not go left beyond a certain point
 				{
 					right = false;
 					left = true;
@@ -876,41 +889,43 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	{
 		if(!collide)
 		{
-			if(keys[KeyEvent.VK_UP] && mario.getJump()==false && jumpWait == false)
+			if(keys[KeyEvent.VK_UP] && mario.getJump()==false && jumpWait == false) //checks if a jump is possible
 			{
 				mario.setJump(true);
-				mario.setVY(-20);
+				mario.setVY(-20); //the power of the jump
 			}
 			if(mario.getJump() == true)
 			{
-				mario.addY(mario.getVY());
+				mario.addY(mario.getVY()); //adds to marios y position to make him jump
 						
-				if(mario.getY() >= ground)
+				if(mario.getY() >= ground) //if mario is on the ground everything is reseted
 				{
-					mario.setY(ground);
+					mario.setY(ground); //his y position is on the ground
 					mario.setVY(0);
 					mario.setJump(false);
 				}
-				mario.addVY(1);
+				mario.addVY(1); //gravity so mario falls back down
 			}
 		}
 	}
 	
 	public void shoot()
 	{
-		if(keys[KeyEvent.VK_SPACE] && fireflowerPower == true && fball.getUsed() == false)
+		if(keys[KeyEvent.VK_SPACE] && fireflowerPower == true && fball.getUsed() == false) //checks if a fireball is possible
 		{
-			fball.setLeft(shiftLeft);
+			fball.setLeft(shiftLeft); //decides the direction of the fireball
 			fball.setRight(shiftRight);
-			fball.setX(mario.getX());
+			fball.setX(mario.getX()); //the fireball is created at marios position
 			fball.setY(mario.getY()+20);
 			fball.setUsed(true);
+			//plays fireball sound
 		    try{sound = Applet.newAudioClip(firewavFile.toURL());}
 		    catch(Exception e){e.printStackTrace();}
 		    sound.play();
 		}
 		if(fball.getUsed() == true)
 		{
+			//moves based on direction mario is facing
 			if(fball.getLeft() == true)
 			{
 				fball.addX(-5);
@@ -926,17 +941,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		}
 		if((fball.getX() < mario.getX() - 380) || (fball.getX() > mario.getX() + 380))
 		{
-			fball.setUsed(false);
+			fball.setUsed(false); //when it reaches a certain point the fireball disappears
 		}	
 	}
 	
     public void jumpCooldown()
     {
-    	if(mario.getVY() == 0 || mario.getVY() == 1)
+    	if(mario.getVY() == 0 || mario.getVY() == 1) //if mario is on the ground or on a platform the cooldown starts
     	{
     		jumpWait = true;
     		jCooldownCount += 1;
-    		if(jCooldownCount == 3)
+    		if(jCooldownCount == 3) //for a certain time mario can not jump
     		{
 	    		jumpWait = false;
 	    		jCooldownCount = 0;
@@ -948,15 +963,16 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     {
 		for(goomba g : currGoombas)
 		{
+			//moves goombas based on how they were loaded, same for spinys, and 1up mushrooms
 			if(!g.getKilled())
 			{
-				if(g.getLeft() == true)
+				if(g.getLeft() == true) //moves based on current direction
 				{
-					if(g.getX() >= g.getMin())
+					if(g.getX() >= g.getMin()) //while it does not reach the min or max it keeps on moving
 					{
 						g.addX(-1);
 					}
-					else
+					else //if it does reach the min or max it changes direction
 					{
 						g.setLeft(false);
 						g.setRight(true);
@@ -1050,9 +1066,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     {
     	for(bulletBill bb: bills)
     	{
-    		
     		if(bb.getCD())
     		{
+    			//bulletbill moves based on direction
     			if(bb.getLeft())
     			{
     				bb.addX(-2);
@@ -1091,16 +1107,12 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					bowser.addX(-1);
 					bowser.setLeft(true);
 					bowser.setRight(false);
-					//bowser.setPunch(false);
-					//bowser.setFrames(0);
 				}
 				if(bowser.getX()-mario.getX()<-70)
 				{
 					bowser.addX(1);
 					bowser.setRight(true);
 					bowser.setLeft(false);
-					//bowser.setPunch(false);
-					//bowser.setFrames(0);
 				}
 			}
 			if(bowser.getX()-mario.getX()>=-70 && bowser.getX()-mario.getX()<=15)
@@ -1127,7 +1139,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void loadPlatforms()
     {
-    	for(int z=1; z<4; z++)
+    	for(int z=1; z<4; z++) //loads 3 times for each level
     	{
     		int plx;
 			int ply;
@@ -1147,9 +1159,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		currList = platforms3;
 	    	}
 	    	Random rand = new Random();
-	    	for(int i=0;i<40;i++)
+	    	for(int i=0;i<40;i++) //the amount of platforms in the level
 	    	{
-	    		plx = rand.nextInt(9000) + 500;
+	    		plx = rand.nextInt(9000) + 500; //makes the platforms have a random x position, y position, and size
 	    		ply = rand.nextInt(250) + 150;
 	    		size = rand.nextInt(320) + 150;
 	    		for(platform p : currList)
@@ -1158,7 +1170,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    			Rectangle oldRect = new Rectangle(p.getX()-10,p.getY()-40,p.getSizeX()+20,p.getSizeY()+80);
 	    			if(newRect.intersects(oldRect))
 	    			{
-	    				sameSpot = true;
+	    				sameSpot = true; //if a platform is loaded on top of an existing platform it is not made
+	    				//the same method is used for loading the rest of the variables as well
 	    			}	
 	    		}
 	    		if(sameSpot == false)
@@ -1225,7 +1238,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				r = rand.nextInt(4);
 				if(r == 1) // 1 in 4 chance
 				{
-					x = rand.nextInt(p.getSizeX() - 15);
+					x = rand.nextInt(p.getSizeX() - 15); //makes the x position somewhere on the platform
 					if(z==1)
 					{
 						coins.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
@@ -1245,7 +1258,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			rground = rand.nextInt(10) + 5;
 			for(int i=0;i<rground;i++)
 			{
-				x = rand.nextInt(9000) + 500;
+				x = rand.nextInt(9000) + 500; //makes the x position somewhere on the ground
 	    		for(coin c : currList2)
 	    		{
 	    			Rectangle newRect = new Rectangle(x,555-30,15,25);
@@ -1468,7 +1481,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		for(goomba g : goombas3)
     		{
     			Rectangle newRect = new Rectangle(x,555-25,50,20);
-    			Rectangle oldRect = new Rectangle(g.getX(),g.getY(),g.getSizeX()+20,g.getSizeY());
+    			Rectangle oldRect = new Rectangle(g.getX()-10,g.getY(),g.getSizeX()+20,g.getSizeY());
     			if(newRect.intersects(oldRect))
     			{
 					sameSpot = true;
@@ -1756,7 +1769,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						    sound.play();
 	    					shrink();
 	    					getTmp();
-	    					fireflowerPower = false;
     					}
     					else if(invincible == false)
     					{
@@ -1797,7 +1809,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     				{
     					shrink();
     					getTmp();
-    					fireflowerPower = false;
 					    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
 					    catch(Exception e){e.printStackTrace();}
 					    sound.play();
@@ -1839,7 +1850,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		{
     			if(bb.getKilled()==false)
     			{
-    				if(mBot.intersects(bbTop) && Math.abs(bb.getX()-bb.getBX())<= 375)
+    				if(mario.getVY() >= 2 && Math.abs(bb.getX()-bb.getBX())<= 375)
     				{
     					bb.setKilled(true);
     					mario.setVY(-10);
@@ -1848,7 +1859,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     				{
     					shrink();
     					getTmp();
-    					fireflowerPower = false;
 					    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
 					    catch(Exception e){e.printStackTrace();}
 					    sound.play();
@@ -2480,7 +2490,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					}
 				}
 				Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-				g.drawRect(m.x,m.y,m.width,m.height);
 			}
 			
 			for(bulletBill bb : currBills)
@@ -2489,7 +2498,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				{
 					if(bb.getY()<555)
 					{
-						bb.addY(2);
+						bb.addY(8);
 						bb.draw(g);
 					}
 				}
@@ -2530,18 +2539,15 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 				else if(!bowser.getPunch() && !bowser.getFireball())
 				{
-					//bowser.setFrames(0);
 					bowser.drawWalk(g);
 				}
 				else if(bowser.getPunch())
 				{
-					//System.out.println(bowser.getFireball());
 					bowser.drawPunch(g);
 				}			
 				
 				Rectangle b = new Rectangle(bowser.getX(), bowser.getY(), bowser.getSizeX(), bowser.getSizeY());
 				g.drawRect(b.x, b.y, b.width, b.height);
-				//System.out.println(bowser.getHealth());
 			}
 			
 			if(collide) //when mario has hit a red mushroom or an enemy, he grows/shrinks
@@ -3787,15 +3793,6 @@ class boss
 		killed = false;
 		punch = false;
 		fireball = true;
-		//fireballPics.add(new ImageIcon("MarioPics/bowser0.png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH));
-		//fireballPics.add(new ImageIcon("MarioPics/bowser1.png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH));
-		/*for(int i=18; i<45; i++)
-		{
-			for(int z=0; z<5; z++)
-			{
-				fireballPics.add(new ImageIcon("MarioPics/BowserPics/bowser"+Integer.toString(i)+".png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH));
-			}
-		}*/
 		for(int i=0; i<13; i++)
 		{
 			for(int z=0; z<5; z++)
@@ -4029,22 +4026,4 @@ class boss
 			killed = true;
 		}
 	}
-	/*public void drawFire(Graphics g)
-	{
-		if(fireCount<50)
-		{
-			fireCount++;
-			g.drawImage(fireballPics.get(0), X, Y, null);
-		}
-		if(fireCount==50)
-		{
-			g.drawImage(fireballPics.get(frames), X, Y, null);
-			frames++;
-		}
-		if(frames==137)
-		{
-			frames=0;
-			fireCount = 0;
-		}
-	}*/
 }
