@@ -62,9 +62,9 @@ public class MarioRun extends JFrame implements ActionListener
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "menu";
+	private String screen = "level4";
 	
-	//Game Data
+	//Game Data------------------------
 	private boolean []keys;
 	private MarioRun mainFrame;
 	private Point mouse;
@@ -122,7 +122,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	File firewavFile = new File("sounds/fire.wav");
 	File startwavFile = new File("sounds/start.wav");
 	
-	//Current Data------------------------ This is for deciding which enemies, pictures, etc. to use in each level
+	//Current Data------------------------ This is for deciding which enemies, pictures, etc. are to be used in each level
 	player mario = new player(430,ground,0,false,false,50,25);
 	fireball fball = new fireball(mario.getX(),mario.getY(),40,30,false,false,false);
 	private ArrayList<coin> currCoins = new ArrayList<coin>();
@@ -185,7 +185,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	//Level4------------------------
 	private Image back4;
 	private int backX4 = -20;
-	boss bowser = new boss(550, 555-70, 70, 70, 100);
+	boss bowser = new boss(650, 555-70, 70, 70, 100);
 	
 	public GamePanel(MarioRun m)
 	{
@@ -242,7 +242,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		fireballLPic = new ImageIcon("Mariopics/fireball.png").getImage().getScaledInstance(40,30,Image.SCALE_SMOOTH);
 		fireballRPic = new ImageIcon("Mariopics/fireballR.png").getImage().getScaledInstance(40,30,Image.SCALE_SMOOTH);
 		brickPic = new ImageIcon("Mariopics/mariobrick.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
-		questionPic = new ImageIcon("Mariopics/questionblock.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
+		questionPic = new ImageIcon("Mariopics/questionblock2.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
 		emptyQuestionPic = new ImageIcon("Mariopics/emptyQuestionblock.png").getImage().getScaledInstance(40,40,Image.SCALE_SMOOTH);
 		shroomPic = new ImageIcon("Mariopics/redShroom.png").getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH);
 		
@@ -338,16 +338,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     public void update()
     {
     	getCurr();
-    	move();
-    	jump();
-    	shoot();
-    	jumpCooldown();
-    	invincibilityCooldown();
-    	checkDeath();
-    	checkFinish();
-    	checkCollectedCoins();
-    	if(screen == "level1" || screen == "level2" || screen == "level3" )
+    	
+    	if(screen == "level1" || screen == "level2" || screen == "level3" || screen == "level4")
     	{
+    		move();
+	    	jump();
+	    	shoot();
+	    	jumpCooldown();
+	    	invincibilityCooldown();
+	    	checkDeath();
+	    	checkFinish();
+	    	checkCollectedCoins();
 	    	checkPlatformCollide();
 	    	checkCoinCollide();
 	    	checkGoombaCollide();
@@ -374,9 +375,58 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
     public void checkDeath()
     {
-    	if(lives == 0) //when the player loses all lives the game ends
+    	//Everything is re-generated and reset if Mario dies and the player restarts at the beginning of the level they died on 
+    	if(lives==0)
     	{
-    		System.exit(0);
+			backX = -20;
+			platforms = new ArrayList<platform>();
+			coins = new ArrayList<coin>();
+			mushrooms = new ArrayList<mushroom>(); //green mushrooms
+			goombas = new ArrayList<goomba>();
+			bricks = new ArrayList<ArrayList<brick>>();
+			marioMushrooms = new ArrayList<marioShroom>(); //red mushrooms
+			platPics = new ArrayList<BufferedImage>();
+			platTopPics = new ArrayList<BufferedImage>();
+			
+			backX2 = -20;
+			coins2 = new ArrayList<coin>();
+			platforms2 = new ArrayList<platform>();
+			mushrooms2 = new ArrayList<mushroom>();
+			goombas2 = new ArrayList<goomba>();
+			spinys = new ArrayList<spiny>();
+			bricks2 = new ArrayList<ArrayList<brick>>();
+			marioMushrooms2 = new ArrayList<marioShroom>();
+			platPics2 = new ArrayList<BufferedImage>();
+			platTopPics2 = new ArrayList<BufferedImage>();
+			
+			backX3 = -20;
+			coins3 = new ArrayList<coin>();
+			platforms3 = new ArrayList<platform>();
+			mushrooms3 = new ArrayList<mushroom>();
+			goombas3 = new ArrayList<goomba>();
+			spinys2 = new ArrayList<spiny>();
+			bills = new ArrayList<bulletBill>();
+			bricks3 = new ArrayList<ArrayList<brick>>();
+			marioMushrooms3 = new ArrayList<marioShroom>();
+			platPics3 = new ArrayList<BufferedImage>();
+			platTopPics3 = new ArrayList<BufferedImage>();
+			
+			Image back4;
+			backX4 = -20;
+			bowser = new boss(650, 555-70, 70, 70, 100);
+			
+			currPic = marioRightWalkPics.get(0);
+	    	loadPlatforms();
+	        loadCoins();
+	    	loadGoombas();
+	    	loadMushrooms();
+	    	loadBricks();
+	    	loadSpinys();
+	    	loadBills();
+	    	lives = 5;
+	    	collectedCoins = 0;
+	    	totalCoins = 0;
+	    	mario.setVY(0);
     	}
     }
     
@@ -429,10 +479,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		mario.setWidth(25);
 		marioBig = false;
 		collide = true;
-		ground += 20;
+		ground += 20; //this is for decreasing Mario's Y value while on the ground
 		mario.setY(mario.getY()+20);	
 		evolveVY = mario.getVY();
-		invE = true;
+		invE = true; //Mario is given a short period of invincibility so he does not lose a life immediately after shrinking
     }
     
     public void grow()
@@ -450,7 +500,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void getCurr()
     {
-    	//used to get the variables for the current level the user is on
+    	//used to get the data for the current level the user is on
     	if(screen == "level1")
     	{
     		currPlatforms = platforms;
@@ -752,11 +802,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					moveBackRight();
 				}
 			}
-			else
-			{
-				right = false;
-				left = false;
-			}
 			Point m = MouseInfo.getPointerInfo().getLocation();
 			Point offset = getLocationOnScreen();
 		}
@@ -792,11 +837,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					shiftLeft = true;
 					moveBackRight();
 				}
-			}
-			else
-			{
-				right = false;
-				left = false;
 			}
 			Point m = MouseInfo.getPointerInfo().getLocation();
 			Point offset = getLocationOnScreen();
@@ -834,11 +874,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					moveBackRight();
 				}
 			}
-			else
-			{
-				right = false;
-				left = false;
-			}
 			Point m = MouseInfo.getPointerInfo().getLocation();
 			Point offset = getLocationOnScreen();
 		}
@@ -875,11 +910,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					moveBackRight();
 				}
 			}
-			else
-			{
-				right = false;
-				left = false;
-			}
 			Point m = MouseInfo.getPointerInfo().getLocation();
 			Point offset = getLocationOnScreen();
 		}
@@ -892,7 +922,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			if(keys[KeyEvent.VK_UP] && mario.getJump()==false && jumpWait == false) //checks if a jump is possible
 			{
 				mario.setJump(true);
-				mario.setVY(-20); //the power of the jump
+				mario.setVY(-20); //the velocity of the jump
 			}
 			if(mario.getJump() == true)
 			{
@@ -1066,8 +1096,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     {
     	for(bulletBill bb: bills)
     	{
-    		if(bb.getCD())
-    		{
+    		if(bb.getCD()) //the bullet bill keeps moving until it has reached its max distance and while the cooldown is active
+    		{			   
     			//bulletbill moves based on direction
     			if(bb.getLeft())
     			{
@@ -1078,10 +1108,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    			bb.addX(2);
 	    		}
     		}
-    		else
+    		else //once the bullet has reached its max distance, it relaunches after checking which way to launch
     		{
     			bb.setCD(true);
-				if(bb.getBX()< mario.getX())
+				if(bb.getBX()< mario.getX()) //the bills get launched out of the left/right side of the blaster depending on Mario's location
 				{
 					bb.setRight(true);
 					bb.setLeft(false);
@@ -1098,8 +1128,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void moveBowser()
     {
-    	if(!bowser.getFireball())
-		{
+    	if(!bowser.getFireball()) //if Bowser is not shooting fireballs or is not punching, it checks where Mario is and Bowser tracks him down until 
+		{						  //Mario is in punch range
 			if(!bowser.getPunch())
 			{
 				if(bowser.getX()-mario.getX()>15)
@@ -1108,14 +1138,14 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					bowser.setLeft(true);
 					bowser.setRight(false);
 				}
-				if(bowser.getX()-mario.getX()<-70)
+				if(bowser.getX()-mario.getX()<-50)
 				{
 					bowser.addX(1);
 					bowser.setRight(true);
 					bowser.setLeft(false);
 				}
 			}
-			if(bowser.getX()-mario.getX()>=-70 && bowser.getX()-mario.getX()<=15)
+			if(bowser.getX()-mario.getX()>=-50 && bowser.getX()-mario.getX()<=15) //Bowser punches once he is in close range of Mario
 			{
 				if(!bowser.getPunch())
 				{
@@ -1123,17 +1153,19 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 			}
 		}
-		
-		if(bowser.getX()>=mario.getX())
+		if(bowser.getHealth()>0) //This determines which way Bowser has to face according to Mario's location
 		{
-			bowser.setRight(false);
-			bowser.setLeft(true);
-			
-		}
-		else if(bowser.getX()<mario.getX())
-		{
-			bowser.setRight(true);
-			bowser.setLeft(false);
+			if(bowser.getX()>=mario.getX())
+			{
+				bowser.setRight(false);
+				bowser.setLeft(true);
+				
+			}
+			else if(bowser.getX()<mario.getX())
+			{
+				bowser.setRight(true);
+				bowser.setLeft(false);
+			}
 		}
     }    
     
@@ -1145,8 +1177,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			int ply;
 			int size;
 	    	boolean sameSpot = false;
-	    	ArrayList<platform> currList = new ArrayList<platform>();
-	    	if(z==1)
+	    	ArrayList<platform> currList = new ArrayList<platform>();  //used to point to the respective list(s) of the level 
+	    	if(z==1)												   //same method is used for loading other things
 	    	{
 	    		currList = platforms;
 	    	}
@@ -1171,17 +1203,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    			if(newRect.intersects(oldRect))
 	    			{
 	    				sameSpot = true; //if a platform is loaded on top of an existing platform it is not made
-	    				//the same method is used for loading the rest of the variables as well
+	    				//the same method is used for loading the rest of the data as well
 	    			}	
 	    		}
 	    		if(sameSpot == false)
 	    		{
-	    			if(z==1)
+	    			if(z==1) //adds the platform and its texture according to the level
 	    			{
 	    				platform plat = new platform(plx,ply,size,10,false);
 		    			platforms.add(plat);
-		    			platPics.add(platPic.getSubimage(0, 13, plat.getSizeX(), 555 - plat.getY()));
-		    			platTopPics.add(platPic.getSubimage(0, 0, plat.getSizeX(), 10));
+		    			platPics.add(platPic.getSubimage(0, 13, plat.getSizeX(), 555 - plat.getY())); //getting texture for the majority of the platform
+		    			platTopPics.add(platPic.getSubimage(0, 0, plat.getSizeX(), 10)); //getting texture for the very top of the platform where entities can stand
 	    			}
 	    			if(z==2)
 	    			{
@@ -1241,9 +1273,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					x = rand.nextInt(p.getSizeX() - 15); //makes the x position somewhere on the platform
 					if(z==1)
 					{
-						coins.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
-					}
-					if(z==2)
+						coins.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false)); //adds a coin on the platform anywhere from the start of the platform and X pixels right 
+					}																   //and 30 pixels up since that is the height of the coin
+					if(z==2)														   //same method is used for generating anything else on the platforms and the ground
 					{
 						coins2.add(new coin(p.getX() + x,p.getY() - 30,15,25,1,false));
 					}
@@ -1272,7 +1304,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		{
 	    			if(z==1)
 	    			{
-	    				coins.add(new coin(x,555-30,15,25,1,false));
+	    				coins.add(new coin(x,555-30,15,25,1,false)); 
 	    			}
 	    			if(z==2)
 	    			{
@@ -1317,9 +1349,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		currList = platforms3;
 	    		currList2 = goombas3;
 	    	}
+	    	//Goombas on platforms
 			for(platform p : currList)
 			{
-				if(p.getSomethingOn() == false)
+				if(p.getSomethingOn() == false) //If an enemy does not already occupy this platform 
 				{
 					r = rand.nextInt(4);
 					if(r == 1)
@@ -1337,11 +1370,11 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						{
 							goombas3.add(new goomba(p.getX() + x,p.getY() - 40,40,40,p.getX(),p.getX()+p.getSizeX()-40,true,false,false));	
 						}
-						p.setSomethingOn(true);
+						p.setSomethingOn(true); //Now an enemy occupies this platform
 					}	
 				}
 			}
-			
+			//Goombas on the ground 
 			rground = rand.nextInt(8)+2;
 			for(int i=0;i<rground;i++)
 			{
@@ -1468,8 +1501,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				if(r == 1)
 				{
 					x = rand.nextInt(p.getSizeX() - 40);
-					bills.add(new bulletBill(p.getX() + x,p.getY() - 55, p.getX()+x, p.getY() - 70, 70, 40, false));
-					p.setSomethingOn(true);
+					bills.add(new bulletBill(p.getX() + x,p.getY() - 55, p.getX()+x, p.getY() - 70, 70, 40, false)); //first two coordinates are for the bullet bill, and the next two are for
+					p.setSomethingOn(true);																			 //for its blaster 
 				}	
 			}
 		}
@@ -1506,7 +1539,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    	int y=0;
 	    	boolean sameSpot = false;
 	    	Random rand = new Random();
-	    	ArrayList<ArrayList<brick>> currList = new ArrayList<ArrayList<brick>>();
+	    	ArrayList<ArrayList<brick>> currList = new ArrayList<ArrayList<brick>>(); 
 	    	if(z==1)
 	    	{
 	    		currList = bricks;
@@ -1523,24 +1556,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    	{
 	    		x = rand.nextInt(9000) + 500;
 	    		y = rand.nextInt(15) + 420;
-	    		for(ArrayList<brick> b2: currList)
-	    		{
+	    		for(ArrayList<brick> b2: currList) //2D ArrayLists are used for the bricks to keep the brick segments separate and so we can access the individual bricks
+	    		{								   //in each brick segment
 	    			for(brick b: b2)
 	    			{
-	    				int dx = b2.get(b2.size()-1).getX() + 40 - b2.get(0).getX();
+	    				int dx = b2.get(b2.size()-1).getX() + 40 - b2.get(0).getX(); //length of the brick segment
 	    				Rectangle brickSegment = new Rectangle(b2.get(0).getX(), b2.get(0).getY(), dx, 40);
-	    				
-	    				Rectangle newRect0 = new Rectangle(x-40,y,40,40);
-	    				Rectangle newRect = new Rectangle(x,y,40,40);
-	    				Rectangle newRect1 = new Rectangle(x+40, y, 40, 40);
-	    				Rectangle newRect2 = new Rectangle(x+80, y, 40, 40);
-	    				Rectangle newRect3 = new Rectangle(x+120, y, 40, 40);
-	    				Rectangle newRect4 = new Rectangle(x+160, y, 40, 40);
-	    				Rectangle newRect5 = new Rectangle(x+200, y, 40, 40);
-		    			
-		    			if(newRect0.intersects(brickSegment) || newRect.intersects(brickSegment) || newRect1.intersects(brickSegment) || newRect2.intersects(brickSegment) || newRect3.intersects(brickSegment) || newRect4.intersects(brickSegment) || newRect5.intersects(brickSegment))
-		    			{
-		    				sameSpot = true;
+	    				Rectangle newRect = new Rectangle(x-40, y, 280, 40); //this makes sure that there is at least a one brick-wide gap in between the brick segments
+
+	    				if(newRect.intersects(brickSegment))
+	    				{
+	    					sameSpot = true;
 	    				}
 	    			}    			
 	    		}
@@ -1633,35 +1659,26 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void checkBrickCollide()
     {
-    	for(ArrayList<brick> b2: currBricks)
+    	for(ArrayList<brick> b2: currBricks) 
     	{
     		for(brick b: b2)
     		{
     			Rectangle bLeft = new Rectangle(b2.get(0).getX(), b2.get(0).getY()+1,1,38); //left side of the brick segment
     			Rectangle bRight = new Rectangle(b2.get(b2.size()-1).getX()+40, b2.get(b2.size()-1).getY()+1,1,38); //right side of the brick segment
-    			
-    			Rectangle brickBot = new Rectangle(b.getX()+2,b.getY()+40,36,1);;
-		    	Rectangle brickTop = new Rectangle(b.getX(),b.getY(),40, 1);
-		    	
-		    	Rectangle marioBot = new Rectangle(mario.getX(),mario.getY()+mario.getHeight(),mario.getWidth(),10);
-		    	Rectangle marioLeft = new Rectangle(mario.getX(),mario.getY(),10,mario.getHeight());
-		    	Rectangle marioRight = new Rectangle(mario.getX()+mario.getWidth()-10,mario.getY(),10,mario.getHeight());
-		    	Rectangle marioTop = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),10);
+    			Rectangle bBot = new Rectangle(b.getX()+2,b.getY()+40,36,1);;
+		    	Rectangle bTop = new Rectangle(b.getX(),b.getY(),40, 1);
 		    	
 		    	Rectangle guy = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
-		    	if(!b.getBroken())
+		    	
+		    	if(!b.getBroken()) //If the brick is not already broken, then it will check for interactions
 		    	{
-		    		if(bLeft.intersects(guy)){
-		        		collideL = true;
-		        		mario.setVY(5);	
-		        		mario.setJump(true);
+		    		if(bLeft.intersects(guy)){ //If mario collides with the left or right side of a brick, he will not be able to continue in that same direction because this
+		        		collideL = true;	   //prevents him from sinking into the bricks
 		        	}
 			        else if(bRight.intersects(guy)){
 			        	collideR = true;
-			        	mario.setVY(5);
-			        	mario.setJump(true);
 			        }
-			        if(brickBot.intersects(guy))
+			        if(bBot.intersects(guy)) 
 			        {
 			        	if(marioBig) //if mario is big and he collides with the underside of a normal brick, he breaks it
 			        	{
@@ -1670,10 +1687,10 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 							    try{sound = Applet.newAudioClip(breakwavFile.toURL());}
 							    catch(Exception e){e.printStackTrace();}
 							    sound.play();
-		        				mario.setVY(5);
+		        				mario.setVY(5); //if mario collides with the underside of a brick, he gets pushed backed down to the ground due to gravity
 				        		mario.setJump(true);
 				        		b.setBroken(true);
-				        		b.setVY(-10);
+				        		b.setVY(-10); //sets the velocity for the pieces of the broken brick
 			        		}
 			        		else //if it is a question brick
 			        		{
@@ -1688,13 +1705,13 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			        		mario.setVY(5);
 			        	}
 			        }
-			        else if(brickTop.intersects(guy))
+			        else if(bTop.intersects(guy))
 			        {
-			        	mario.setY(b.getY()-mario.getHeight());
+			        	mario.setY(b.getY()-mario.getHeight()); //if mario lands on top of a brick, his Y coordinate is adjusted for him to stay there
 			        	mario.setVY(0);
 			        	mario.setJump(false);
 			        }
-			        if(mario.getY()==ground || mario.getY()<= b.getY()-50)
+			        if(mario.getY()==ground || mario.getY()<= b.getY()-mario.getHeight())  //if mario is not colliding either side of a brick
 			        {
 			        	collideL = false;
 			        	collideR = false;
@@ -1748,27 +1765,27 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
 			Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
-			Rectangle mBot = new Rectangle(mario.getX(), mario.getY()+mario.getHeight()-15, mario.getWidth(), 15);
-			Rectangle gTop = new Rectangle(g.getX(), g.getY(), g.getSizeX(), 5);
 			Rectangle goombaRect = new Rectangle(g.getX(),g.getY(),g.getSizeX(),g.getSizeY());
+			
+			//Similar methods used for collisions of all other enemies
     		if(m.intersects(goombaRect))
     		{
     			if(g.getKilled()==false)
     			{
-    				if(mBot.intersects(gTop))
+    				if(mario.getVY() != 1 && mario.getVY() != 0 && mario.getVY() > 1) //if Mario is falling on top of the goomba, the goomba dies
     				{
     					g.setKilled(true);
     					mario.setVY(-10);
     				}
-    				else
+    				else //otherwise Mario gets shrinked if he is big mario or loses a life otherwise
     				{
-	    				if(marioBig && !invE) //if mario is big mario or he is not in the animation of growing into big mario
+	    				if(marioBig && !invE) //if Mario is big mario and he is not in the animation of growing into big mario
 	    				{
 						    try{sound = Applet.newAudioClip(damagewavFile.toURL());}
 						    catch(Exception e){e.printStackTrace();}
 						    sound.play();
 	    					shrink();
-	    					getTmp();
+	    					getTmp(); //getting pictures needed for animation of shrinking 
     					}
     					else if(invincible == false)
     					{
@@ -1776,12 +1793,12 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						    catch(Exception e){e.printStackTrace();}
 						    sound.play();
 	    					lives -= 1;
-							inv = true;
+							inv = true; //Gives him a short period of invincibility so Mario does not lose another life immediately 
     					}
     				}
     			}
     		}
-    		else if(f.intersects(goombaRect))
+    		else if(f.intersects(goombaRect)) //if Mario's fireballs hit a goomba, it dies
     		{
     			if(g.getKilled()==false)
     			{
@@ -1823,7 +1840,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					}
     			}
     		}
-    		else if(f.intersects(spinyRect))
+    		else if(f.intersects(spinyRect)) 
     		{
     			if(s.getKilled()==false)
     			{
@@ -1850,7 +1867,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		{
     			if(bb.getKilled()==false)
     			{
-    				if(mario.getVY() >= 2 && Math.abs(bb.getX()-bb.getBX())<= 375)
+    				if(mario.getVY() >= 2 && Math.abs(bb.getX()-bb.getBX())<= 390)
     				{
     					bb.setKilled(true);
     					mario.setVY(-10);
@@ -1890,12 +1907,14 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	{
 		Rectangle fireRect = new Rectangle(bowser.getX()+bowser.getFireDist(), bowser.getY()+10, 50, 20);
 		Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(), mario.getHeight());
+		Rectangle mBot = new Rectangle(mario.getX(), mario.getY()+mario.getHeight()-5, mario.getWidth(), 10);
+		Rectangle bowserTop = new Rectangle(bowser.getX(), bowser.getY(), bowser.getSizeX(), 10);
 		Rectangle bowserRect = new Rectangle();
 		Rectangle f = new Rectangle(fball.getX(),fball.getY(),fball.getSizeX(),fball.getSizeY());
-		Rectangle bRect = new Rectangle(bowser.getX(), bowser.getY(), bowser.getSizeX(), bowser.getSizeY());
-		
-		
-		if(bowser.getRight())
+		Rectangle bRect = new Rectangle(bowser.getX(), bowser.getY()+10, bowser.getSizeX(), bowser.getSizeY());
+		//These are to determine which side to put the Bowser's hitbox of getting hit by Mario's fireballs,
+		//since making a large hitbox would make Mario's fireball do too much damage
+		if(bowser.getRight()) 
 		{
 			bowserRect = new Rectangle(bowser.getX(), bowser.getY(), 1, bowser.getSizeY());			
 		}
@@ -1904,7 +1923,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			bowserRect = new Rectangle(bowser.getX()+bowser.getSizeX()-5, bowser.getY(), 1, bowser.getSizeY());			
 		}
 		
-		if(bRect.intersects(marioRect) || fireRect.intersects(marioRect)) //if mario gets hit by bowser, mario does not lose his fireball because then he will not be able to kill him
+		if(bRect.intersects(marioRect) || fireRect.intersects(marioRect)) //if Mario gets hit by Bowser's punch or fireball
 		{
 			if(marioBig && !invE)
 			{
@@ -1917,24 +1936,41 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				inv = true;
 			}
 		}
-		else if(f.intersects(bowserRect))
+		else if(f.intersects(bowserRect)) //Mario's fireballs
 		{
 			if(fball.getUsed() == true)
 			{
 				bowser.damage(1);
 			}
 		}
+		else if(mBot.intersects(bowserTop))
+		{
+			if(!bowser.getAttackCD()) //Mario can jump on Bowser's head and damage him if he hasn't done so recently
+			{
+				bowser.damage(1);
+				mario.setVY(-10); //As usual, Mario jumps up after hitting an enemy from above
+				bowser.setAttackCD(true);
+			}
+			else
+			{
+				mario.setVY(5); //if Mario is still on top of Bowser after jumping once, then the 
+			}
+		}
+		if(bowser.getAttackCD()) //if Mario has jumped on Bowser and damaged him, he cannot do that again for a few moments
+		{						 //this is to prevent the user to just keep jumping on Bowser's head to kill him
+			bowser.attackCD();
+		}
 	}
     
-    public void checkMushroomCollide()
+    public void checkMushroomCollide() 
     {
-    	for(mushroom mu : currMushrooms)
+    	for(mushroom mu : currMushrooms) //1 up mushrooms (green)
     	{
 			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
 			Rectangle mushRect = new Rectangle(mu.getX(),mu.getY(),mu.getSizeX(),mu.getSizeY());
     		if(m.intersects(mushRect))
     		{
-    			if(mu.getCollected()==false)
+    			if(mu.getCollected()==false) //if mario collides with the green mushroom, he gains a life
     			{
 				    try{sound = Applet.newAudioClip(oneupwavFile.toURL());}
 				    catch(Exception e){e.printStackTrace();}
@@ -1954,21 +1990,23 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     		Rectangle shroom = new Rectangle(mushroom.getX(),mushroom.getY(),40,40);
     		if(m.intersects(shroom) && mushroom.getCond())
     		{
-    			if(mushroom.getVY() != 0 || mushroom.getGround())
+    			if(mushroom.getVY() != 0 || mushroom.getGround()) //if the mushroom is falling off of its brick segment or is on the ground, then it will be obtainable 
     			{
     				mushroom.setCond(false);
-    				if(!marioBig  && !invE)
-    				{
+    				if(!marioBig  && !invE) //if Mario is not already big Mario or is not in the animation of becoming big Mario,
+    				{						//he collects the mushroom and transform into big Mario
     					grow();
 			    		getTmp();	
+    				}
+    				else //otherwise he gets a coin
+    				{
+    					totalCoins++;
     				}
     			}
     		}
     	}
     }
     
-    
-	
     public void keyTyped(KeyEvent e) {}
 
     public void keyPressed(KeyEvent e)
@@ -2275,17 +2313,20 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
     		Rectangle marioRect = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),mario.getHeight());
     		g.drawImage(currBack,currBackX,0,null);
+    		
+    		//Drawing the texture for the platforms underneath the very top of the platform
 			for(int i=0; i<currPlatforms.size(); i++)
 			{
 				g.drawImage(currPlatPics.get(i), currPlatforms.get(i).getX(), currPlatforms.get(i).getY(), null);
 			}
+			//Drawing the texture for the platforms for the very top of the platform where entities can walk
 			for(int i=0; i<currPlatforms.size(); i++)
 			{
 				g.drawImage(currPlatTopPics.get(i), currPlatforms.get(i).getX(), currPlatforms.get(i).getY(), null);
 			}
 			for(coin c : currCoins)
 			{
-				if(c.getCollected() == false)
+				if(c.getCollected() == false) //if Mario has not yet collected a coin, it will be drawn
 				{
 					g.drawImage(coinPic, c.getX(), c.getY(), null);
 				}
@@ -2296,7 +2337,6 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				{
 					Rectangle m = new Rectangle(mario.getX(), mario.getY(), mario.getWidth(),10);
 					Rectangle brickBot = new Rectangle(b2.get(i).getX()+4,b2.get(i).getY()+40,32,1);
-					
 					if(m.intersects(brickBot)) 
 					{
 						if(!marioBig && !b2.get(i).getQuestion())//if mario is small and hit hits the bottom of a brick segment, he pushes it up a bit
@@ -2324,18 +2364,23 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 									{
 										marioMushrooms3.add(new marioShroom(b2.get(i).getX(), b2.get(i).getY()-45, 0));	
 									}
+									currBrick = new ArrayList<brick>(); //reset list 
 									for(brick b: b2)
 									{
 										if(!b.getBroken()) 
 										{
 											currBrick.add(b); //this is for determining when the red mushroom will fall of its brick segment
 										}
+										else if(b.getX()>b2.get(i).getX()) //if any brick is broken that is after the question block, that is the new brick segment's end
+										{
+											break; 
+										}
 									}
 								}
-								else if(n==0)
+								else
 								{
 									coinCollide = true;
-									tmpBrick = b2.get(i);
+									tmpBrick = b2.get(i); //used for drawing a coin above the question block Mario obtained the coin from
 									totalCoins++; 
 								}
 								b2.get(i).setShroom(true); //Mario cannot obtain another mushroom from the same question block
@@ -2357,12 +2402,15 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					}						
 					else if(!m.intersects(brickBot)) 
 					{
-						g.drawImage(brickPic,b2.get(i).getX(),b2.get(i).getY(),null);
-						if(b2.get(i).getQuestion() && !b2.get(i).getShroom()) //if Mario has not hit a quesiton block yet
+						if(!b2.get(i).getQuestion()) //if it is not a question block
+						{
+							g.drawImage(brickPic,b2.get(i).getX(),b2.get(i).getY(),null);	
+						}
+						else if(b2.get(i).getQuestion() && !b2.get(i).getShroom()) //if Mario has not hit a quesiton block yet
 						{
 							g.drawImage(questionPic,b2.get(i).getX(),b2.get(i).getY(),null);
 						}
-						else if(b2.get(i).getShroom())
+						else if(b2.get(i).getQuestion() && b2.get(i).getShroom())
 						{
 							g.drawImage(emptyQuestionPic,b2.get(i).getX(),b2.get(i).getY(),null);
 						}
@@ -2388,7 +2436,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		}
 	    		
 				int dx = currBrick.get(currBrick.size()-1).getX()+40 - currBrick.get(0).getX(); //this gets the length of the red mushroom's brick segment
-				Rectangle mushRect = new Rectangle(mushroom.getX(), mushroom.getY(), 40, 40);
+				Rectangle mushRect = new Rectangle(mushroom.getX(), mushroom.getY(), 40, 40); 
 				
 				if(mushroom.getX() > currBrick.get(0).getX()+dx && mushroom.getGround() == false) //if the mushroom has reached the end of its brick segment, it falls to the ground
 				{		
@@ -2402,7 +2450,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 				mushroom.addY(mushroom.getVY());
     		}
-    		for(goomba gb : currGoombas)
+    		for(goomba gb : currGoombas) //draws the sprites for the goombas if they are not killed
 			{
 				if(gb.getKilled() == false)
 				{
@@ -2442,7 +2490,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 					}
 				}	
 			}
-	
+			//Drawing 1 up (green) mushrooms if they are not collected 
 			for(mushroom m : currMushrooms)
 			{
 				if(m.getCollected() == false)
@@ -2451,7 +2499,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 			}
 			
-			if(fball.getUsed() == true)
+			if(fball.getUsed() == true) //if Mario has shot a fireball
 			{
 				if(fball.getLeft() == true)
 				{
@@ -2466,18 +2514,17 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{	
 				if(!s.getKilled())
 				{
-					s.draw(g);
+					s.draw(g); //drawing spinys if they are not dead
 				}
 				else
 				{
 					if(s.getLeft())
 					{ 
-						if(s.getKillTimer()<=15) // dead goomba appears for a bit
+						if(s.getKillTimer()<=15) // dead spiny appears for a bit
 						{
 							g.drawImage(s.getDeadImage(0),s.getX(),s.getY(),null);
 							s.setKillTimer(s.getKillTimer()+1);
 						}
-	
 					}
 					if(s.getRight())
 					{ 
@@ -2496,7 +2543,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{
 				if(bb.getKilled())
 				{
-					if(bb.getY()<555)
+					if(bb.getY()<555) //if Mario kills the bullet bill before it explodes, it falls to the ground
 					{
 						bb.addY(8);
 						bb.draw(g);
@@ -2504,7 +2551,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 				if(!bb.getKilled())
 				{
-					if(Math.abs(bb.getX()-bb.getBX())<= 370)
+					if(Math.abs(bb.getX()-bb.getBX())<= 390) //if the bullet bill has reached its distance of 390 pixels from its blaster, it explodes
 					{
 						bb.draw(g);	//drawing the bullet bills
 					}	
@@ -2528,12 +2575,16 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				if(bowser.getHealth()<=0)
 				{
 					bowser.drawDeath(g);
-					if(bowser.getKilled())
+					if(bowser.getKilled()) //this is true after Bowser's death animation is done 
 					{
 						screen = "exit";
+						try{sound = Applet.newAudioClip(clearwavFile.toURL());} //level clear sound
+					    catch(Exception e){e.printStackTrace();}
+					    sound.play();
 					}
 				}
-				else if(bowser.getFireball())
+				//these draw whatever Bowser is currently doing (shooting fireballs, walking, or punching)
+				else if(bowser.getFireball()) 
 				{
 					bowser.draw(g);
 				}
@@ -2545,16 +2596,13 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				{
 					bowser.drawPunch(g);
 				}			
-				
-				Rectangle b = new Rectangle(bowser.getX(), bowser.getY(), bowser.getSizeX(), bowser.getSizeY());
-				g.drawRect(b.x, b.y, b.width, b.height);
 			}
 			
 			if(collide) //when mario has hit a red mushroom or an enemy, he grows/shrinks
 			{
 				if(marioBig) //mario grows
 				{
-					if(evolveCD<=25)
+					if(evolveCD<=25) //each picture for the evolve animation lasts for around every 25 counts added to evolveCD
 					{
 						g.drawImage(tmp.get(0), mario.getX(), mario.getY()+13, null);
 						evolveCD++;
@@ -2564,7 +2612,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						g.drawImage(tmp.get(1), mario.getX(), mario.getY()+6, null);
 						evolveCD++;
 					}
-					if(evolveCD>=50 && evolveCD<=75)
+					if(evolveCD>=50 && evolveCD<=75) //this gets the third picture in the animation according to which ever way Mario is facing
 					{
 						if(shiftRight)
 						{
@@ -2576,14 +2624,15 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						}
 						evolveCD++;
 					}
-					if(evolveCD==75)
+					if(evolveCD==75) //reseting the timer
 					{
 						evolveCD = 0;
 						collide = false;
 					}
-					if(shiftLeft)
+					//Getting the new set of pictures for big Mario
+					if(shiftLeft) //if Mario is facing left
 					{
-						if(left)
+						if(left) //if Mario is facing left and walking left
 						{
 							currPic = marioBigLeftWalkPics.get(frames);
 						}
@@ -2592,6 +2641,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 							currPic = marioBigLeftWalkPics.get(0);
 						}
 					}
+					//Same concept for right pictures
 					if(shiftRight)
 					{
 						if(right)
@@ -2604,7 +2654,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						}
 					}
 				}
-				else //mario shrinks
+				else //mario shrinks, same concept applied for Mario shrinking, except his the pictures are drawn in reverse order
 				{
 					if(evolveCD<=25)
 					{
@@ -2674,9 +2724,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 			}
 			
-			if(!collide)
+			if(!collide) //Mario's walking animation
 			{
-				if(!right && !left)
+				if(!right && !left) //Idle pictures depending on if Mario is small/big and the direction he is facing
 				{
 					if(marioBig)
 					{
@@ -2690,8 +2740,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				if(right)
 				{
 					if(marioBig)
-					{
-						currPic = marioBigRightWalkPics.get(0);
+					{ 
+						currPic = marioBigRightWalkPics.get(0); //Idle picture is set to Mario facing right
 						g.drawImage(marioBigRightWalkPics.get(frames),mario.getX(),mario.getY(),null);
 					}
 					else
@@ -2756,7 +2806,7 @@ class player
 		height = h;
 		width = w;	
 	}
-	
+	//Getters and setters
 	public int getHeight()
 	{
 	    return height;
@@ -3637,11 +3687,11 @@ class bulletBill
 
 	public bulletBill(int x1, int y1, int bX1, int bY1, int sx1, int sy1, boolean c)
 	{
-		X = x1;
+		X = x1; //coordinates of the bullet bill
 		Y = y1;
 		sizeX = sx1;
 		sizeY = sy1;
-		bX = bX1;
+		bX = bX1; //coordinates of the blaster
 		bY = bY1;
 		blaster = new ImageIcon("MarioPics/blaster2.png").getImage().getScaledInstance(60, 70,Image.SCALE_SMOOTH);
 		leftPic = new ImageIcon("MarioPics/leftBill.png").getImage().getScaledInstance(sizeX, sizeY,Image.SCALE_SMOOTH);
@@ -3770,9 +3820,9 @@ class bulletBill
 
 class boss
 {
-	private int X,Y,VX,sizeX, sizeY, health, fireCount, fireDist, totalFireDist;
-	private int frames, totalFrames;
-	private boolean killed, punch, fireball;
+	private int X,Y,VX,sizeX, sizeY, health, fireCount, fireDist, totalFireDist, attackCount;
+	private int frames, deathFrames, totalFrames;
+	private boolean killed, punch, fireball, attackCD;
 	private boolean left = true;
 	private boolean right = false;
 	private Image bowserRight, bowserLeft, fireballRight, fireballLeft;
@@ -3787,8 +3837,9 @@ class boss
 		Y = Y1;
 		sizeX = sizeX1;
 		sizeY = sizeY1;
-		health = 5;
+		health = 50;
 		frames = 0;
+		deathFrames = 0; //frames for Bowser death animation
 		totalFrames = 0;
 		killed = false;
 		punch = false;
@@ -3850,6 +3901,11 @@ class boss
 		return fireDist;
 	}
 	
+	public boolean getAttackCD()
+	{
+	    return attackCD;
+	}
+	
 	public boolean getLeft()
 	{
 	    return left;
@@ -3880,14 +3936,14 @@ class boss
 		X += n;
 	}
 	
-	public void setFrames(int n)
-	{
-		frames = n;
-	}
-	
 	public void damage(int n)
 	{
 		health -= n;
+	}
+	
+	public void setAttackCD(boolean bool)
+	{
+		attackCD = bool;
 	}
 	
 	public void setLeft(boolean bool)
@@ -3905,9 +3961,19 @@ class boss
 		punch = bool;
 	}
 	
+	public void attackCD() //Cooldown for when Mario jumps on Bowser's head
+	{
+		attackCount++;
+		if(attackCount>=30)
+		{
+			attackCount = 0;
+			attackCD = false;
+		}
+	}
+	
 	public void draw(Graphics g)
 	{
-		if(fireCount<70)
+		if(fireCount<70) //Cooldown between fireballs
 		{
 			fireCount++;	
 		}
@@ -3919,11 +3985,11 @@ class boss
 		{
 			g.drawImage(bowserLeft, X-15, Y, null);
 		}
-		if(fireCount==70)
+		if(fireCount==70) 	
 		{	
 			if(right)
 			{
-				fireDist+=5;
+				fireDist+=5; //distance of the fireball from bowser
 				g.drawImage(fireballRight, X+fireDist, Y+10, null);
 			}
 			if(left)
@@ -3933,13 +3999,13 @@ class boss
 			}
 		}
 
-		if(Math.abs(fireDist)==300)
+		if(Math.abs(fireDist)==300) //reset distance
 		{
 			fireDist=0;
 			fireCount=0;
 			totalFireDist+= 300;
 		}
-		if(totalFireDist>=1200)
+		if(totalFireDist>=1200) //once 4 fireballs have been shot, Bowser switches to tracking Mario down and using Punch attack when he is range	
 		{
 			fireball = false;
 			totalFireDist = 0;
@@ -3948,14 +4014,14 @@ class boss
 	
 	public void drawWalk(Graphics g)
 	{
-		if(punch)
+		if(punch) //Bowser cannot walk while he is punching
 		{
 			return;
 		}
 		Graphics2D g2d = (Graphics2D) g;
 		if(left)
 		{
-			g2d.drawImage(walkPics.get(frames), X+sizeX, Y, -sizeX, sizeY,  null);
+			g2d.drawImage(walkPics.get(frames), X+sizeX, Y, -sizeX, sizeY,  null); //flipping the images using Graphics2D
 		}		
 		if(right)
 		{
@@ -3984,9 +4050,9 @@ class boss
 		{
 			frames = 0; 
 			totalFrames++;
-			punch = false;
-		}
-		if(totalFrames*140>=420)
+			punch = false; //after each punch, Bowser checks to see where Mario is and moves accordingly if needed
+		} 
+		if(totalFrames*140>=420) //after 3 punches, he switches back to fireballs 
 		{
 			System.out.println(true);
 			punch = false;
@@ -4003,27 +4069,27 @@ class boss
 		{
 			if(left)
 			{
-				g2d.drawImage(deadPics.get(frames), X+sizeX, Y, -sizeX, sizeY,  null); //flipping the images using Graphics2D
+				g2d.drawImage(deadPics.get(deathFrames), X+sizeX, Y, -sizeX, sizeY,  null); 
 			}
 			if(right)
 			{
-				g.drawImage(deadPics.get(frames), X, Y, null);
+				g.drawImage(deadPics.get(deathFrames), X, Y, null);
 			}
 		}
 			
-		if(frames==50) //Decreasing bowser's height later on in his death animation because he is falling to the ground
+		if(deathFrames==50) 
 		{
-			Y+=5;
+			Y+=5; //Decreasing bowser's height later on in his death animation because he is falling to the ground
 		}
-		frames++;
-		if(frames==60)
+		deathFrames++;
+		if(deathFrames==60)
 		{	
-			frames = 0;
+			deathFrames = 0;
 			totalFrames++;
 		}
 		if(totalFrames*60>=120) //this ensures two loops of the death animation because the animation takes time to load
 		{
-			killed = true;
+			killed = true; //after the animation is done, this allows the screen to be set to the exit screen
 		}
 	}
 }
