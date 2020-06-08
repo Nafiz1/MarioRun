@@ -62,7 +62,7 @@ public class MarioRun extends JFrame implements ActionListener
 
 class GamePanel extends JPanel implements KeyListener, MouseListener
 {
-	private String screen = "level4";
+	private String screen = "menu";
 	
 	//Game Data------------------------
 	private boolean []keys;
@@ -110,7 +110,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	private int lives = 5;
 	private boolean right, left, collideL, collideR, marioBig;
 	private Font marioFont;
-	private boolean fireflowerPower = true;
+	private boolean fireflowerPower = false;
 	private int breakCount = 0;
 	
 	//Sound Effects------------------------
@@ -121,6 +121,8 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	File damagewavFile = new File("sounds/damage.wav");
 	File firewavFile = new File("sounds/fire.wav");
 	File startwavFile = new File("sounds/start.wav");
+	File deathwavFile = new File("sounds/death.wav");
+	File growwavFile = new File("sounds/grow.wav");
 	
 	//Current Data------------------------ This is for deciding which enemies, pictures, etc. are to be used in each level
 	player mario = new player(430,ground,0,false,false,50,25);
@@ -375,9 +377,13 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
     public void checkDeath()
     {
-    	//Everything is re-generated and reset if Mario dies and the player restarts at the beginning of the level they died on 
+    	//Player is sent back to the menu when their lives reach 0
     	if(lives==0)
     	{
+		    try{sound = Applet.newAudioClip(deathwavFile.toURL());} //level clear sound
+		    catch(Exception e){e.printStackTrace();}
+		    sound.play();
+    		screen = "menu";
 			backX = -20;
 			platforms = new ArrayList<platform>();
 			coins = new ArrayList<coin>();
@@ -427,6 +433,19 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    	collectedCoins = 0;
 	    	totalCoins = 0;
 	    	mario.setVY(0);
+	    	
+			currCoins = new ArrayList<coin>();
+            currPlatforms = new ArrayList<platform>();
+            currMushrooms = new ArrayList<mushroom>();
+            currGoombas = new ArrayList<goomba>();
+            currSpinys = new ArrayList<spiny>();
+            currBills = new ArrayList<bulletBill>();
+            currBricks = new ArrayList<ArrayList<brick>>();
+            currMarioMushrooms = new ArrayList<marioShroom>();
+            currBack = back;
+            currBackX = -20;
+            currPlatPics = new ArrayList<BufferedImage>();
+            currPlatTopPics = new ArrayList<BufferedImage>();
     	}
     }
     
@@ -488,6 +507,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     public void grow()
     {
     	//makes mario bigger
+	    try{sound = Applet.newAudioClip(growwavFile.toURL());} //level clear sound
+	    catch(Exception e){e.printStackTrace();}
+	    sound.play();
 		mario.setHeight(70);
 		mario.setWidth(40);
 		marioBig = true;
@@ -1178,7 +1200,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			int size;
 	    	boolean sameSpot = false;
 	    	ArrayList<platform> currList = new ArrayList<platform>();  //used to point to the respective list(s) of the level 
-	    	if(z==1)												   //same method is used for loading other things
+	    	if(z==1)												   //same method is used for loading other parts of the level
 	    	{
 	    		currList = platforms;
 	    	}
@@ -1203,7 +1225,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    			if(newRect.intersects(oldRect))
 	    			{
 	    				sameSpot = true; //if a platform is loaded on top of an existing platform it is not made
-	    				//the same method is used for loading the rest of the data as well
+	    				//this is also used for loading the rest of the objects
 	    			}	
 	    		}
 	    		if(sameSpot == false)
@@ -1232,7 +1254,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	    		}
 	    		else
 	    		{
-	    			sameSpot = false;
+	    			sameSpot = false; //sets same spot to false again for the next platform
 	    		}
 	    	}
     	}
@@ -1240,11 +1262,12 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     
     public void loadCoins()
     {
+    	//the other objects are loaded in a similar way
     	for(int z=1; z<4; z++)
     	{
-    		int r;
-	    	int x;
-	    	int rground;
+    		int r; //random variable for coins on platform
+	    	int x; //random x position for the coin
+	    	int rground; //random variable for coins on the ground
 	    	boolean sameSpot = false;
 	    	Random rand = new Random();
 	    	ArrayList<platform> currList = new ArrayList<platform>();
@@ -1268,7 +1291,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			for(platform p : currList)
 			{
 				r = rand.nextInt(4);
-				if(r == 1) // 1 in 4 chance
+				if(r == 1) // 1 in 4 chance of spawning for every platform
 				{
 					x = rand.nextInt(p.getSizeX() - 15); //makes the x position somewhere on the platform
 					if(z==1)
@@ -1287,7 +1310,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			}
 			
 			//coins on ground
-			rground = rand.nextInt(10) + 5;
+			rground = rand.nextInt(10) + 5; //controls how many coins are present in the level
 			for(int i=0;i<rground;i++)
 			{
 				x = rand.nextInt(9000) + 500; //makes the x position somewhere on the ground
@@ -1354,7 +1377,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			{
 				if(p.getSomethingOn() == false) //If an enemy does not already occupy this platform 
 				{
-					r = rand.nextInt(4);
+					r = rand.nextInt(3);
 					if(r == 1)
 					{
 						x = rand.nextInt(p.getSizeX() - 40);
@@ -1723,14 +1746,15 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	
     public void checkPlatformCollide()
     {
-    	boolean onPlatform = false;
+    	boolean onPlatform = false; //checks if the player is on the platform
     	for(platform p : currPlatforms)
     	{
+    		//all collide methods use rectangles to check for the collisions between objects
 			Rectangle m = new Rectangle(mario.getX()-5,mario.getY()+mario.getHeight(),mario.getWidth()+10,20); //player has 10 pixel clearance for x position
 			Rectangle plat = new Rectangle(p.getX(),p.getY(),p.getSizeX(),p.getSizeY());
 			if(mario.getVY() >= 0 && mario.getJump() == true)
 			{
-	    		if(m.intersects(plat))
+	    		if(m.intersects(plat)) //if colliding with a platform, the players y position will be on the platform
 	    		{
 	    			onPlatform = true;
 					mario.setY(p.getY()-mario.getHeight());
@@ -1741,19 +1765,20 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	}
     	if(onPlatform == false && mario.getY() != ground)
     	{
-    		mario.setJump(true);
+    		mario.setJump(true); //to check if the player has left the platform, and if so will fall to the ground
     	}	
     }
     
     public void checkCoinCollide()
     {
+    	//to check collision of the coins on the ground and platforms
 		for(coin c : currCoins)
 		{
 			Rectangle m = new Rectangle(mario.getX(),mario.getY(),mario.getWidth(),mario.getHeight());
 			Rectangle coinRect = new Rectangle(c.getX(),c.getY(),c.getSizeX(),c.getSizeY());
 			if(m.intersects(coinRect))
 			{
-				c.setCollected(true);
+				c.setCollected(true); //sets collected to true, which is used to calculate how many coins the player has collected on hte level
 			}
 		}	
     }
@@ -2029,7 +2054,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 	{
 		if(screen == "menu")
 		{
-			if(menuPlay.contains(mouse))
+			if(menuPlay.contains(mouse)) //starts the level
 			{
 				frames = 0;
 				screen = "level1";
@@ -2062,9 +2087,9 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				screen = "menu";
 			}
 		}
-		if(screen == "intermission")
+		if(screen == "intermission") //after every level there is an intermission screen
 		{
-			if(intermissionNext.contains(mouse))
+			if(intermissionNext.contains(mouse)) //the next button goes to the next level
 			{
 				mario.setVY(0);
 				screen = "level2";
@@ -2074,7 +2099,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			}
 			if(intermissionStore.contains(mouse))
 			{
-				screen = "store";
+				screen = "store"; //the store button goes to the store
 			}
 		}
 		if(screen == "intermission2")
@@ -2120,6 +2145,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 		{
 			if(storePrev.contains(mouse))
 			{
+				//controls what intermission to go back to
 				if(intermissionNum == 1)
 				{
 					screen = "intermission";
@@ -2135,19 +2161,16 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			}
 			if(store1.contains(mouse))
 			{
-				if(totalCoins >= 5)
+				if(totalCoins >= 5 && marioBig == false) //if the player has enough coins and is not already big mario, gives the player a mushroom
 				{
-					if(marioBig == false)
-					{
-						getTmp();
-						grow();
-					}
+					getTmp();
+					grow();
 					totalCoins -= 5;
 				}
 			}
 			if(store2.contains(mouse))
 			{
-				if(totalCoins >= 10)
+				if(totalCoins >= 10) //if the player has enough coins gives 5 lives
 				{
 					lives += 5;
 					totalCoins -= 10;
@@ -2155,7 +2178,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 			}
 			if(store3.contains(mouse))
 			{
-				if(totalCoins >= 25)
+				if(totalCoins >= 25 && fireflowerPower == false) //if the player has enough coins and does not already have fire powers, gives the player a fireflower
 				{
 					fireflowerPower = true;
 					totalCoins -= 25;
@@ -2176,11 +2199,11 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
     	{
 	    	g.drawImage(menuback,0,0,null);
     		g.setColor(Color.blue);
-	    	if(menuPlay.contains(mouse))
+	    	if(menuPlay.contains(mouse)) //if mouse is hovering over button it displays the button down image
 	    	{
 	    		g.drawImage(startbtnDown,menuPlay.x,menuPlay.y,null);
 	    	}
-	    	else
+	    	else //if not it displays the regular image
 	    	{
 	    		g.drawImage(startbtn,menuPlay.x,menuPlay.y,null);
 	    	}
@@ -2551,7 +2574,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 				}
 				if(!bb.getKilled())
 				{
-					if(Math.abs(bb.getX()-bb.getBX())<= 390) //if the bullet bill has reached its distance of 390 pixels from its blaster, it explodes
+					if(Math.abs(bb.getX()-bb.getBX())<= 385) //if the bullet bill has reached its distance of 390 pixels from its blaster, it explodes
 					{
 						bb.draw(g);	//drawing the bullet bills
 					}	
@@ -2654,7 +2677,7 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 						}
 					}
 				}
-				else //mario shrinks, same concept applied for Mario shrinking, except his the pictures are drawn in reverse order
+				else //mario shrinks, same concept applied for Mario shrinking, except for his the pictures are drawn in reverse order
 				{
 					if(evolveCD<=25)
 					{
@@ -2790,11 +2813,12 @@ class GamePanel extends JPanel implements KeyListener, MouseListener
 
 class player
 {
+	//classes for the objects in the level are created in the same way
 	private int X;
-	private int Y;
+	private int Y; //most of the objects have a x position and y position
 	private int VY;
 	private boolean jump;
-	private int height;
+	private int height; //as well as a width and height
 	private int width;
 		
 	public player(int px, int py, int pvy, boolean j, boolean f, int h, int w)
@@ -2806,6 +2830,7 @@ class player
 		height = h;
 		width = w;	
 	}
+	
 	//Getters and setters
 	public int getHeight()
 	{
@@ -4054,7 +4079,6 @@ class boss
 		} 
 		if(totalFrames*140>=420) //after 3 punches, he switches back to fireballs 
 		{
-			System.out.println(true);
 			punch = false;
 			fireball = true;
 			totalFrames = 0;
